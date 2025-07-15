@@ -28,7 +28,10 @@ const isNightTime = (date: Date): boolean => {
   const urlParams = new URLSearchParams(window.location.search);
   const forceNight = urlParams.get('night') === 'true';
   
-  return isNightByTime || forceNight;
+  // 临时强制夜晚模式用于测试
+  const testNightMode = true;
+  
+  return isNightByTime || forceNight || testNightMode;
 };
 
 // 获取天气数据
