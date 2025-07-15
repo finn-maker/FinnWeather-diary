@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/weather-diary-react/static/css/main.c7cdba23.css",
-    "main.js": "/weather-diary-react/static/js/main.6eb4cf16.js",
+    "main.js": "/weather-diary-react/static/js/main.abb961b4.js",
     "index.html": "/weather-diary-react/index.html",
     "main.c7cdba23.css.map": "/weather-diary-react/static/css/main.c7cdba23.css.map",
-    "main.6eb4cf16.js.map": "/weather-diary-react/static/js/main.6eb4cf16.js.map"
+    "main.abb961b4.js.map": "/weather-diary-react/static/js/main.abb961b4.js.map"
   },
   "entrypoints": [
     "static/css/main.c7cdba23.css",
-    "static/js/main.6eb4cf16.js"
+    "static/js/main.abb961b4.js"
   ]
 }
