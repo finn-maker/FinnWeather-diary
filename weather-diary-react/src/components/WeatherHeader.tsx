@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { Refresh, LocationOn, Thermostat, Opacity, Air } from '@mui/icons-material';
-import { WeatherData } from '../types';
+import { WeatherData, MOON_PHASE_ICONS } from '../types';
 
 interface WeatherHeaderProps {
   weather: WeatherData | null;
@@ -20,10 +20,18 @@ interface WeatherHeaderProps {
 
 const WeatherHeader: React.FC<WeatherHeaderProps> = ({ weather, onRefresh }) => {
   const theme = useTheme();
+  
+  const getWeatherTheme = () => {
+    if (!weather) return 'default';
+    return weather.condition;
+  };
 
   if (!weather) {
     return (
-      <Card sx={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)' }}>
+      <Card sx={{ 
+        background: getWeatherTheme() === 'night' ? 'rgba(52, 73, 94, 0.95)' : 'rgba(255, 255, 255, 0.95)', 
+        backdropFilter: 'blur(10px)' 
+      }}>
         <CardContent>
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Box display="flex" alignItems="center" gap={2}>
@@ -48,7 +56,7 @@ const WeatherHeader: React.FC<WeatherHeaderProps> = ({ weather, onRefresh }) => 
       transition={{ duration: 0.6 }}
     >
       <Card sx={{ 
-        background: 'rgba(255, 255, 255, 0.95)', 
+        background: getWeatherTheme() === 'night' ? 'rgba(52, 73, 94, 0.95)' : 'rgba(255, 255, 255, 0.95)', 
         backdropFilter: 'blur(10px)',
         borderRadius: 3
       }}>
@@ -60,7 +68,11 @@ const WeatherHeader: React.FC<WeatherHeaderProps> = ({ weather, onRefresh }) => 
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               >
-                <Typography variant="h1" sx={{ fontSize: '4rem', lineHeight: 1 }}>
+                <Typography variant="h1" sx={{ 
+                  fontSize: '4rem', 
+                  lineHeight: 1,
+                  filter: getWeatherTheme() === 'night' ? 'brightness(1.2) contrast(1.1)' : 'none'
+                }}>
                   {weather.icon}
                 </Typography>
               </motion.div>
@@ -68,20 +80,20 @@ const WeatherHeader: React.FC<WeatherHeaderProps> = ({ weather, onRefresh }) => 
               {/* 天气信息 */}
               <Box>
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
-                  <LocationOn color="primary" fontSize="small" />
-                  <Typography variant="h6" color="primary">
+                  <LocationOn sx={{ color: getWeatherTheme() === 'night' ? '#64b5f6' : 'primary.main' }} fontSize="small" />
+                  <Typography variant="h6" sx={{ color: getWeatherTheme() === 'night' ? '#64b5f6' : 'primary.main' }}>
                     {weather.location}
                   </Typography>
                 </Box>
                 
-                <Typography variant="body1" color="text.secondary" mb={1}>
+                <Typography variant="body1" sx={{ color: getWeatherTheme() === 'night' ? '#b0b0b0' : 'text.secondary' }} mb={1}>
                   {weather.description}
                 </Typography>
 
                 <Box display="flex" alignItems="center" gap={2}>
                   <Box display="flex" alignItems="center" gap={0.5}>
-                    <Thermostat color="primary" fontSize="small" />
-                    <Typography variant="h4" color="primary" fontWeight="bold">
+                    <Thermostat sx={{ color: getWeatherTheme() === 'night' ? '#64b5f6' : 'primary.main' }} fontSize="small" />
+                    <Typography variant="h4" sx={{ color: getWeatherTheme() === 'night' ? '#64b5f6' : 'primary.main' }} fontWeight="bold">
                       {weather.temperature}°C
                     </Typography>
                   </Box>
@@ -92,6 +104,7 @@ const WeatherHeader: React.FC<WeatherHeaderProps> = ({ weather, onRefresh }) => 
                       label={`湿度 ${weather.humidity}%`}
                       size="small"
                       variant="outlined"
+                      data-weather-info="humidity"
                     />
                   )}
 
@@ -101,6 +114,17 @@ const WeatherHeader: React.FC<WeatherHeaderProps> = ({ weather, onRefresh }) => 
                       label={`风速 ${weather.windSpeed}km/h`}
                       size="small"
                       variant="outlined"
+                      data-weather-info="wind"
+                    />
+                  )}
+
+                  {weather.moonPhase && (
+                    <Chip
+                      label={`月相 ${MOON_PHASE_ICONS[weather.moonPhase as keyof typeof MOON_PHASE_ICONS]}`}
+                      size="small"
+                      variant="outlined"
+                      data-moon-phase={weather.moonPhase}
+                      sx={{ fontSize: '1.2rem' }}
                     />
                   )}
                 </Box>

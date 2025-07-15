@@ -59,9 +59,9 @@ const DiaryHistory: React.FC<DiaryHistoryProps> = ({ entries }) => {
 
   return (
     <Box>
-      <Typography variant="h5" gutterBottom sx={{ fontFamily: '"Ma Shan Zheng", cursive' }}>
-        📚 历史记录 ({entries.length})
-      </Typography>
+              <Typography variant="h5" gutterBottom className="gradient-title" sx={{ fontFamily: '"Ma Shan Zheng", cursive' }}>
+          📚 历史记录 ({entries.length})
+        </Typography>
 
       <AnimatePresence>
         {entries.map((entry, index) => (
@@ -143,6 +143,7 @@ const DiaryHistory: React.FC<DiaryHistoryProps> = ({ entries }) => {
                     label={`${entry.weather.icon} ${entry.weather.description}`}
                     size="small"
                     variant="outlined"
+                    data-weather-info="description"
                   />
                 </Box>
 

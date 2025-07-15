@@ -1,4 +1,5 @@
-import { WeatherData } from '../types';
+import { WeatherData, MoonPhase, MOON_PHASE_ICONS } from '../types';
+import { calculateMoonPhase } from './moonPhaseService';
 
 // 获取当前位置
 const getCurrentPosition = (): Promise<GeolocationPosition> => {
@@ -14,6 +15,20 @@ const getCurrentPosition = (): Promise<GeolocationPosition> => {
       { timeout: 10000, enableHighAccuracy: true }
     );
   });
+};
+
+// 判断是否为夜晚
+const isNightTime = (date: Date): boolean => {
+  const hour = date.getHours();
+  // 晚上6点到早上6点算作夜晚
+  // 为了测试，我们也可以手动设置为夜晚模式
+  const isNightByTime = hour >= 18 || hour < 6;
+  
+  // 检查URL参数，允许手动切换夜晚模式
+  const urlParams = new URLSearchParams(window.location.search);
+  const forceNight = urlParams.get('night') === 'true';
+  
+  return isNightByTime || forceNight;
 };
 
 // 获取天气数据
@@ -38,11 +53,14 @@ const fetchWeatherData = async (lat: number, lon: number): Promise<WeatherData> 
 const parseWeatherData = (data: any): WeatherData => {
   const current = data.current_condition[0];
   const location = data.nearest_area[0];
+  const now = new Date();
+  const isNight = isNightTime(now);
+  const moonPhase = calculateMoonPhase(now);
   
   const weatherConditions = {
-    'Sunny': { condition: 'sunny', icon: '☀️' },
-    'Clear': { condition: 'clear', icon: '🌙' },
-    'Partly cloudy': { condition: 'cloudy', icon: '⛅' },
+    'Sunny': { condition: isNight ? 'night' : 'sunny', icon: isNight ? MOON_PHASE_ICONS[moonPhase] : '☀️' },
+    'Clear': { condition: isNight ? 'night' : 'clear', icon: isNight ? MOON_PHASE_ICONS[moonPhase] : '🌙' },
+    'Partly cloudy': { condition: 'cloudy', icon: isNight ? '☁️' : '⛅' },
     'Cloudy': { condition: 'cloudy', icon: '☁️' },
     'Overcast': { condition: 'cloudy', icon: '☁️' },
     'Light rain': { condition: 'rainy', icon: '🌧️' },
@@ -53,26 +71,59 @@ const parseWeatherData = (data: any): WeatherData => {
   };
 
   const weatherDesc = current.weatherDesc[0].value;
-  const weatherInfo = weatherConditions[weatherDesc as keyof typeof weatherConditions] || { condition: 'cloudy', icon: '🌤️' };
+  const weatherInfo = weatherConditions[weatherDesc as keyof typeof weatherConditions] || { 
+    condition: isNight ? 'night' : 'cloudy', 
+    icon: isNight ? MOON_PHASE_ICONS[moonPhase] : '🌤️' 
+  };
 
   return {
     location: `${location.areaName[0].value}, ${location.country[0].value}`,
-    description: weatherDesc,
+    description: isNight ? `夜晚 - ${weatherDesc}` : weatherDesc,
     temperature: current.temp_C,
     condition: weatherInfo.condition as WeatherData['condition'],
     icon: weatherInfo.icon,
     humidity: current.humidity,
-    windSpeed: current.windspeedKmph
+    windSpeed: current.windspeedKmph,
+    moonPhase: isNight ? moonPhase : undefined
   };
 };
 
 // 使用模拟天气数据
 const useMockWeatherData = (): WeatherData => {
+  const now = new Date();
+  const isNight = isNightTime(now);
+  const moonPhase = calculateMoonPhase(now);
+  
   const mockWeatherData = [
-    { location: '北京市', description: '晴天', temperature: '22', condition: 'sunny' as const, icon: '☀️' },
-    { location: '上海市', description: '多云', temperature: '18', condition: 'cloudy' as const, icon: '☁️' },
-    { location: '广州市', description: '小雨', temperature: '25', condition: 'rainy' as const, icon: '🌧️' },
-    { location: '成都市', description: '阴天', temperature: '16', condition: 'cloudy' as const, icon: '⛅' }
+    { 
+      location: '北京市', 
+      description: isNight ? '夜晚 - 晴天' : '晴天', 
+      temperature: '22', 
+      condition: isNight ? 'night' as const : 'sunny' as const, 
+      icon: isNight ? MOON_PHASE_ICONS[moonPhase] : '☀️',
+      moonPhase: isNight ? moonPhase : undefined
+    },
+    { 
+      location: '上海市', 
+      description: isNight ? '夜晚 - 多云' : '多云', 
+      temperature: '18', 
+      condition: 'cloudy' as const, 
+      icon: '☁️' 
+    },
+    { 
+      location: '广州市', 
+      description: isNight ? '夜晚 - 小雨' : '小雨', 
+      temperature: '25', 
+      condition: 'rainy' as const, 
+      icon: '🌧️' 
+    },
+    { 
+      location: '成都市', 
+      description: isNight ? '夜晚 - 阴天' : '阴天', 
+      temperature: '16', 
+      condition: 'cloudy' as const, 
+      icon: '⛅' 
+    }
   ];
 
   return mockWeatherData[Math.floor(Math.random() * mockWeatherData.length)];

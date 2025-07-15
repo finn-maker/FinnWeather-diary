@@ -15,9 +15,13 @@ import { Refresh, Menu } from '@mui/icons-material';
 import WeatherHeader from './components/WeatherHeader';
 import DiaryForm from './components/DiaryForm';
 import DiaryHistory from './components/DiaryHistory';
+import ThemeToggle from './components/ThemeToggle';
 import { WeatherData, DiaryEntry } from './types';
 import { getWeatherData } from './services/weatherService';
 import { saveDiaryEntry, getDiaryEntries } from './services/diaryService';
+import './styles/nightTheme.css';
+import './styles/fonts.css';
+import './styles/chipColors.css';
 
 const App: React.FC = () => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -67,6 +71,7 @@ const App: React.FC = () => {
 
   return (
     <Box
+      className={getWeatherTheme() === 'night' ? 'night-theme' : ''}
       sx={{
         minHeight: '100vh',
         background: `linear-gradient(135deg, ${getWeatherGradient(getWeatherTheme())})`,
@@ -76,27 +81,29 @@ const App: React.FC = () => {
       <AppBar 
         position="static" 
         sx={{ 
-          background: 'rgba(255, 255, 255, 0.95)',
+          background: getWeatherTheme() === 'night' ? 'rgba(52, 73, 94, 0.95)' : 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(10px)',
           boxShadow: 'none',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.2)'
+          borderBottom: getWeatherTheme() === 'night' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)'
         }}
       >
         <Toolbar>
           <Typography 
             variant="h6" 
             component="div" 
+            className="gradient-title"
             sx={{ 
               flexGrow: 1,
               fontFamily: '"Ma Shan Zheng", cursive',
-              color: 'primary.main'
+              fontSize: '1.5rem',
+              color: getWeatherTheme() === 'night' ? '#64b5f6' : 'inherit'
             }}
           >
             天气日记本
           </Typography>
           <IconButton 
             onClick={handleRefreshWeather}
-            sx={{ color: 'primary.main' }}
+            sx={{ color: getWeatherTheme() === 'night' ? '#64b5f6' : 'primary.main' }}
           >
             <Refresh />
           </IconButton>
@@ -123,7 +130,7 @@ const App: React.FC = () => {
               elevation={3}
               sx={{ 
                 p: 3, 
-                background: 'rgba(255, 255, 255, 0.95)',
+                background: getWeatherTheme() === 'night' ? 'rgba(52, 73, 94, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(10px)',
                 borderRadius: 3
               }}
@@ -142,7 +149,7 @@ const App: React.FC = () => {
               elevation={3}
               sx={{ 
                 p: 3, 
-                background: 'rgba(255, 255, 255, 0.95)',
+                background: getWeatherTheme() === 'night' ? 'rgba(52, 73, 94, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(10px)',
                 borderRadius: 3
               }}
@@ -152,6 +159,14 @@ const App: React.FC = () => {
           </motion.div>
         </Box>
       </Container>
+      
+      {/* 夜晚主题的月亮装饰 */}
+      {getWeatherTheme() === 'night' && (
+        <div className="moon-container" />
+      )}
+      
+      {/* 主题切换按钮 */}
+      <ThemeToggle />
     </Box>
   );
 };
@@ -169,6 +184,8 @@ const getWeatherGradient = (condition: string) => {
       return '#eceff1 0%, #cfd8dc 100%';
     case 'clear':
       return '#ce93d8 0%, #9c27b0 100%';
+    case 'night':
+      return '#2c3e50 0%, #34495e 50%, #2c3e50 100%';
     default:
       return '#667eea 0%, #764ba2 100%';
   }

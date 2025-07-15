@@ -97,7 +97,7 @@ const DiaryForm: React.FC<DiaryFormProps> = ({ weather, onSave }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <Typography variant="h5" gutterBottom sx={{ fontFamily: '"Ma Shan Zheng", cursive' }}>
+        <Typography variant="h5" gutterBottom className="gradient-title" sx={{ fontFamily: '"Ma Shan Zheng", cursive' }}>
           📝 记录今天
         </Typography>
         
@@ -151,6 +151,7 @@ const DiaryForm: React.FC<DiaryFormProps> = ({ weather, onSave }) => {
                   onClick={() => handleMoodSelect(mood)}
                   variant={selectedMood?.type === mood.type ? 'filled' : 'outlined'}
                   color={selectedMood?.type === mood.type ? 'primary' : 'default'}
+                  data-mood={mood.type}
                   sx={{ 
                     cursor: 'pointer',
                     fontSize: '1rem',
