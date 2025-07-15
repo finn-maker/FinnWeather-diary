@@ -1,0 +1,357 @@
+/* 夜晚主题样式 */
+.night-theme {
+  position: relative;
+  overflow: hidden;
+}
+
+/* 星星背景 */
+.night-theme::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.6), transparent),
+    radial-gradient(2px 2px at 160px 30px, #ddd, transparent),
+    radial-gradient(1px 1px at 200px 60px, rgba(255,255,255,0.7), transparent),
+    radial-gradient(2px 2px at 240px 20px, #ccc, transparent),
+    radial-gradient(1px 1px at 280px 90px, rgba(255,255,255,0.5), transparent);
+  background-repeat: repeat;
+  background-size: 300px 150px;
+  animation: twinkle 4s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 月亮容器 */
+.moon-container {
+  position: fixed;
+  top: 50px;
+  right: 50px;
+  width: 80px;
+  height: 80px;
+  z-index: 1;
+  pointer-events: none;
+  /* 确保不会遮挡隐私状态组件 */
+}
+
+/* 月亮动画 */
+.moon-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 30% 30%, #fff 0%, #f0f0f0 50%, transparent 100%);
+  border-radius: 50%;
+  box-shadow: 
+    0 0 20px rgba(255, 255, 255, 0.3),
+    inset -5px -5px 15px rgba(0, 0, 0, 0.1);
+  animation: moonGlow 3s ease-in-out infinite alternate;
+}
+
+/* 星星闪烁动画 */
+@keyframes twinkle {
+  0% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+}
+
+/* 月亮发光动画 */
+@keyframes moonGlow {
+  0% {
+    box-shadow: 
+      0 0 20px rgba(255, 255, 255, 0.3),
+      inset -5px -5px 15px rgba(0, 0, 0, 0.1);
+  }
+  100% {
+    box-shadow: 
+      0 0 30px rgba(255, 255, 255, 0.5),
+      inset -5px -5px 15px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* 夜晚主题下的卡片样式 */
+.night-theme .MuiCard-root {
+  background: rgba(52, 73, 94, 0.95) !important;
+  backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 夜晚主题下的文字颜色 - 卡片内文字改为浅色 */
+.night-theme .MuiCard-root .MuiTypography-root {
+  color: #e0e0e0 !important;
+}
+
+.night-theme .MuiCard-root .MuiTypography-root.MuiTypography-body2 {
+  color: #d0d0d0 !important;
+}
+
+/* 夜晚主题下的日记内容样式 */
+.night-theme .MuiCard-root .MuiTypography-root[color="text.primary"] {
+  color: #f0f0f0 !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 夜晚主题下的输入框样式 */
+.night-theme .MuiTextField-root .MuiOutlinedInput-root {
+  background: rgba(70, 85, 105, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.night-theme .MuiTextField-root .MuiOutlinedInput-root:hover {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.night-theme .MuiTextField-root .MuiOutlinedInput-root.Mui-focused {
+  border-color: #64b5f6 !important;
+}
+
+.night-theme .MuiTextField-root .MuiOutlinedInput-root .MuiOutlinedInput-input {
+  color: #e0e0e0 !important;
+}
+
+.night-theme .MuiTextField-root .MuiInputLabel-root {
+  color: #b0b0b0 !important;
+}
+
+.night-theme .MuiTextField-root .MuiInputLabel-root.Mui-focused {
+  color: #64b5f6 !important;
+}
+
+/* 夜晚主题下的按钮样式 - 月亮主题 */
+.night-theme .MuiButton-contained {
+  background: linear-gradient(45deg, #64b5f6, #42a5f5, #1976d2) !important;
+  color: white !important;
+  border: none !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(100, 181, 246, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.night-theme .MuiButton-contained:hover {
+  background: linear-gradient(45deg, #42a5f5, #64b5f6, #90caf9) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(100, 181, 246, 0.5) !important;
+}
+
+.night-theme .MuiButton-contained:disabled {
+  background: #ccc !important;
+  color: #999 !important;
+}
+
+/* 夜晚主题下的芯片样式 - 修复选项卡颜色 */
+.night-theme .MuiChip-root {
+  background: rgba(100, 181, 246, 0.15) !important;
+  color: #64b5f6 !important;
+  border-color: rgba(100, 181, 246, 0.4) !important;
+  font-weight: 500 !important;
+}
+
+.night-theme .MuiChip-root.MuiChip-clickable:hover {
+  background: rgba(100, 181, 246, 0.25) !important;
+  border-color: #64b5f6 !important;
+}
+
+/* 夜晚主题下的图标按钮样式 */
+.night-theme .MuiIconButton-root {
+  color: #64b5f6 !important;
+}
+
+.night-theme .MuiIconButton-root:hover {
+  background: rgba(100, 181, 246, 0.2) !important;
+}
+
+/* 夜晚主题下的AppBar样式 */
+.night-theme .MuiAppBar-root {
+  background: rgba(52, 73, 94, 0.95) !important;
+  backdrop-filter: blur(15px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+.night-theme .MuiAppBar-root .MuiTypography-root {
+  color: #64b5f6 !important;
+  font-weight: 600 !important;
+}
+
+.night-theme .MuiAppBar-root .MuiIconButton-root {
+  color: #64b5f6 !important;
+}
+
+/* 夜晚主题下的天气头部样式 */
+.night-theme .MuiCard-root .MuiTypography-root.MuiTypography-body1 {
+  color: #b0b0b0 !important;
+}
+
+/* 夜晚主题下的标签样式 */
+.night-theme .MuiCard-root .MuiChip-root {
+  background: rgba(100, 181, 246, 0.15) !important;
+  color: #64b5f6 !important;
+  border-color: rgba(100, 181, 246, 0.4) !important;
+}
+
+/* 夜晚主题下的心情选择样式 */
+.night-theme .MuiChip-root[data-mood] {
+  background: rgba(70, 85, 105, 0.9) !important;
+  color: #e0e0e0 !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+}
+
+.night-theme .MuiChip-root[data-mood]:hover {
+  background: rgba(100, 181, 246, 0.2) !important;
+  border-color: #64b5f6 !important;
+  transform: scale(1.05) !important;
+}
+
+.night-theme .MuiChip-root[data-mood].MuiChip-colorPrimary {
+  background: #64b5f6 !important;
+  color: white !important;
+  border-color: #64b5f6 !important;
+}
+
+/* 夜晚主题下的天气信息芯片样式 */
+.night-theme .weather-info .MuiChip-root {
+  background: rgba(100, 181, 246, 0.2) !important;
+  color: #64b5f6 !important;
+  border-color: rgba(100, 181, 246, 0.5) !important;
+  font-weight: 600 !important;
+}
+
+.night-theme .weather-info .MuiChip-root .MuiChip-label {
+  color: #64b5f6 !important;
+}
+
+/* 夜晚主题下的月相芯片样式 */
+.night-theme .MuiChip-root[data-moon-phase] {
+  background: rgba(255, 193, 7, 0.15) !important;
+  color: #f57c00 !important;
+  border-color: rgba(255, 193, 7, 0.4) !important;
+  font-weight: 600 !important;
+}
+
+.night-theme .MuiChip-root[data-moon-phase] .MuiChip-label {
+  color: #f57c00 !important;
+}
+
+/* 夜晚主题下的湿度风速芯片样式 */
+.night-theme .MuiChip-root[data-weather-info] {
+  background: rgba(76, 175, 80, 0.15) !important;
+  color: #2e7d32 !important;
+  border-color: rgba(76, 175, 80, 0.4) !important;
+  font-weight: 600 !important;
+}
+
+.night-theme .MuiChip-root[data-weather-info] .MuiChip-label {
+  color: #2e7d32 !important;
+}
+
+/* 夜晚主题下的月亮装饰效果 */
+.night-theme .MuiCard-root::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, rgba(100, 181, 246, 0.1), rgba(187, 222, 251, 0.05));
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.night-theme .MuiCard-root:hover::before {
+  opacity: 1;
+}
+
+/* 夜晚主题下的月亮光晕效果 */
+.night-theme .MuiCard-root {
+  position: relative;
+  overflow: hidden;
+}
+
+.night-theme .MuiCard-root::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(100, 181, 246, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.night-theme .MuiCard-root:hover::after {
+  left: 100%;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .moon-container {
+    top: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+  }
+  
+  .night-theme::before {
+    background-size: 200px 100px;
+  }
+}
+
+/* 确保隐私状态组件始终显示在最顶层 */
+.privacy-status-wrapper,
+.privacy-status,
+.privacy-details {
+  z-index: 99999 !important;
+  position: relative !important;
+}
+
+.privacy-details {
+  z-index: 100000 !important;
+}
+
+/* 夜晚主题下特别确保隐私组件不被遮挡 */
+.night-theme .privacy-status-wrapper,
+.night-theme .privacy-status,
+.night-theme .privacy-details {
+  z-index: 99999 !important;
+  position: relative !important;
+}
+
+.night-theme .privacy-details {
+  z-index: 100000 !important;
+}
+
+/* 当隐私弹窗显示时，隐藏月亮装饰 */
+.privacy-overlay ~ .moon-container,
+.privacy-details ~ .moon-container {
+  display: none !important;
+}
+
+/* 当隐私弹窗显示时，降低星星背景的可见度 */
+.privacy-overlay ~ .night-theme::before,
+.privacy-details ~ .night-theme::before {
+  opacity: 0.1 !important;
+} 
