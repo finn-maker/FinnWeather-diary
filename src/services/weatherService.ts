@@ -89,7 +89,7 @@ const locationTranslations: { [key: string]: string } = {
   'Tianjin': '天津',
   
   // 美国城市
-  'Spring Valley': '春谷',
+  // 'Spring Valley': '春谷',
   'New York': '纽约',
   'Los Angeles': '洛杉矶',
   'Chicago': '芝加哥',
