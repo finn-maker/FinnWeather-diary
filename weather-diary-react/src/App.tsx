@@ -22,6 +22,7 @@ import { saveDiaryEntry, getDiaryEntries } from './services/diaryService';
 const DiaryForm = lazy(() => import('./components/DiaryForm'));
 const DiaryHistory = lazy(() => import('./components/DiaryHistory'));
 const ThemeToggle = lazy(() => import('./components/ThemeToggle'));
+const CloudStorageManager = lazy(() => import('./components/CloudStorageManager'));
 import './styles/nightTheme.css';
 import './styles/fonts.css';
 import './styles/chipColors.css';
