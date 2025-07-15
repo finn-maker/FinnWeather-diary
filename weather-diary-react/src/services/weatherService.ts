@@ -32,8 +32,8 @@ const isNightTime = (date: Date): boolean => {
   const forceNight = urlParams.get('night') === 'true';
   console.log('🔗 URL强制夜晚模式:', forceNight);
   
-  // 临时强制夜晚模式用于测试
-  const testNightMode = true;
+  // 临时强制夜晚模式用于测试（已禁用）
+  const testNightMode = false;
   console.log('🧪 测试强制夜晚模式:', testNightMode);
   
   const result = isNightByTime || forceNight || testNightMode;

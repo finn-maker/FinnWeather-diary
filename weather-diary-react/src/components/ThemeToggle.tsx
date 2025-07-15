@@ -39,8 +39,8 @@ const ThemeToggle: React.FC = () => {
     <Box 
       sx={{ 
         position: 'fixed', 
-        top: 20, 
-        left: 20, 
+        top: { xs: 10, sm: 20 }, 
+        left: { xs: 10, sm: 20 }, 
         zIndex: 1000,
         display: 'flex',
         flexDirection: 'column',
@@ -51,7 +51,10 @@ const ThemeToggle: React.FC = () => {
         variant="contained"
         startIcon={isNightMode ? <LightMode /> : <DarkMode />}
         onClick={toggleNightMode}
+        size="small"
         sx={{
+          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+          padding: { xs: '4px 8px', sm: '6px 16px' },
           background: isNightMode 
             ? 'rgba(255, 255, 255, 0.2)' 
             : 'rgba(0, 0, 0, 0.2)',
@@ -72,12 +75,13 @@ const ThemeToggle: React.FC = () => {
         label={isNightMode ? '🌙 夜晚模式' : '☀️ 白天模式'}
         size="small"
         sx={{
+          fontSize: { xs: '0.7rem', sm: '0.8rem' },
+          height: { xs: 24, sm: 28 },
           background: isNightMode 
             ? 'rgba(255, 255, 255, 0.1)' 
             : 'rgba(0, 0, 0, 0.1)',
           color: isNightMode ? 'white' : 'black',
           border: '1px solid rgba(255, 255, 255, 0.3)',
-          fontSize: '0.8rem'
         }}
       />
     </Box>

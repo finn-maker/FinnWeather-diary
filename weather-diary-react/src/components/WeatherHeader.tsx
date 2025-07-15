@@ -90,14 +90,26 @@ const WeatherHeader: React.FC<WeatherHeaderProps> = ({ weather, onRefresh }) => 
                   {weather.description}
                 </Typography>
 
-                <Box display="flex" alignItems="center" gap={2}>
-                  <Box display="flex" alignItems="center" gap={0.5}>
-                    <Thermostat sx={{ color: getWeatherTheme() === 'night' ? '#64b5f6' : 'primary.main' }} fontSize="small" />
-                    <Typography variant="h4" sx={{ color: getWeatherTheme() === 'night' ? '#64b5f6' : 'primary.main' }} fontWeight="bold">
-                      {weather.temperature}°C
-                    </Typography>
-                  </Box>
+                {/* 温度显示 */}
+                <Box display="flex" alignItems="center" gap={0.5} mb={2}>
+                  <Thermostat sx={{ color: getWeatherTheme() === 'night' ? '#64b5f6' : 'primary.main' }} fontSize="small" />
+                  <Typography variant="h4" sx={{ color: getWeatherTheme() === 'night' ? '#64b5f6' : 'primary.main' }} fontWeight="bold">
+                    {weather.temperature}°C
+                  </Typography>
+                </Box>
 
+                {/* 天气详情芯片 - 响应式布局 */}
+                <Box 
+                  display="flex" 
+                  flexWrap="wrap" 
+                  gap={1}
+                  sx={{
+                    '& .MuiChip-root': {
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      height: { xs: 28, sm: 32 }
+                    }
+                  }}
+                >
                   {weather.humidity && (
                     <Chip
                       icon={<Opacity />}
@@ -124,7 +136,7 @@ const WeatherHeader: React.FC<WeatherHeaderProps> = ({ weather, onRefresh }) => 
                       size="small"
                       variant="outlined"
                       data-moon-phase={weather.moonPhase}
-                      sx={{ fontSize: '1.2rem' }}
+                      sx={{ fontSize: { xs: '1rem', sm: '1.2rem' } }}
                     />
                   )}
                 </Box>
