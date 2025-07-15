@@ -49,6 +49,51 @@ const fetchWeatherData = async (lat: number, lon: number): Promise<WeatherData> 
   }
 };
 
+// 天气描述中英文对照
+const weatherTranslations: { [key: string]: string } = {
+  'Sunny': '晴天',
+  'Clear': '晴朗',
+  'Partly cloudy': '多云',
+  'Cloudy': '阴天',
+  'Overcast': '阴霾',
+  'Light rain': '小雨',
+  'Moderate rain': '中雨',
+  'Heavy rain': '大雨',
+  'Light snow': '小雪',
+  'Heavy snow': '大雪',
+  'Thunderstorm': '雷雨',
+  'Light rain shower': '阵雨',
+  'Moderate rain shower': '中阵雨',
+  'Heavy rain shower': '大阵雨',
+  'Mist': '薄雾',
+  'Fog': '雾',
+  'Freezing rain': '冻雨',
+  'Sleet': '雨夹雪',
+  'Drizzle': '毛毛雨',
+  'Light drizzle': '轻雾雨',
+  'Heavy drizzle': '浓雾雨'
+};
+
+// 地名中英文对照
+const locationTranslations: { [key: string]: string } = {
+  'Beijing': '北京',
+  'Shanghai': '上海',
+  'Guangzhou': '广州',
+  'Shenzhen': '深圳',
+  'Hangzhou': '杭州',
+  'Nanjing': '南京',
+  'Wuhan': '武汉',
+  'Chengdu': '成都',
+  'Chongqing': '重庆',
+  'Tianjin': '天津',
+  'China': '中国',
+  'United States': '美国',
+  'United Kingdom': '英国',
+  'Japan': '日本',
+  'South Korea': '韩国',
+  'Singapore': '新加坡'
+};
+
 // 解析天气数据
 const parseWeatherData = (data: any): WeatherData => {
   const current = data.current_condition[0];
@@ -66,6 +111,7 @@ const parseWeatherData = (data: any): WeatherData => {
     'Light rain': { condition: 'rainy', icon: '🌧️' },
     'Moderate rain': { condition: 'rainy', icon: '🌧️' },
     'Heavy rain': { condition: 'rainy', icon: '⛈️' },
+    'Thunderstorm': { condition: 'rainy', icon: '⛈️' },
     'Light snow': { condition: 'snowy', icon: '🌨️' },
     'Heavy snow': { condition: 'snowy', icon: '❄️' }
   };
@@ -76,9 +122,18 @@ const parseWeatherData = (data: any): WeatherData => {
     icon: isNight ? MOON_PHASE_ICONS[moonPhase] : '🌤️' 
   };
 
+  // 翻译地名
+  const areaName = location.areaName[0].value;
+  const countryName = location.country[0].value;
+  const translatedArea = locationTranslations[areaName] || areaName;
+  const translatedCountry = locationTranslations[countryName] || countryName;
+  
+  // 翻译天气描述
+  const translatedWeatherDesc = weatherTranslations[weatherDesc] || weatherDesc;
+
   return {
-    location: `${location.areaName[0].value}, ${location.country[0].value}`,
-    description: isNight ? `夜晚 - ${weatherDesc}` : weatherDesc,
+    location: `${translatedArea}, ${translatedCountry}`,
+    description: isNight ? `夜晚 - ${translatedWeatherDesc}` : translatedWeatherDesc,
     temperature: current.temp_C,
     condition: weatherInfo.condition as WeatherData['condition'],
     icon: weatherInfo.icon,
