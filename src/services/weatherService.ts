@@ -42,7 +42,7 @@ const fetchWeatherData = async (lat: number, lon: number): Promise<WeatherData> 
     }
 
     const data = await response.json();
-    return parseWeatherData(data);
+    return await parseWeatherData(data);
   } catch (error) {
     console.error('天气API调用失败:', error);
     throw error;
@@ -74,8 +74,9 @@ const weatherTranslations: { [key: string]: string } = {
   'Heavy drizzle': '浓雾雨'
 };
 
-// 地名中英文对照
+// 地名中英文对照（常用地名缓存）
 const locationTranslations: { [key: string]: string } = {
+  // 中国城市
   'Beijing': '北京',
   'Shanghai': '上海',
   'Guangzhou': '广州',
@@ -86,16 +87,95 @@ const locationTranslations: { [key: string]: string } = {
   'Chengdu': '成都',
   'Chongqing': '重庆',
   'Tianjin': '天津',
+  
+  // 美国城市
+  'Spring Valley': '春谷',
+  'New York': '纽约',
+  'Los Angeles': '洛杉矶',
+  'Chicago': '芝加哥',
+  'Houston': '休斯顿',
+  'San Francisco': '旧金山',
+  'Seattle': '西雅图',
+  'Boston': '波士顿',
+  'Washington': '华盛顿',
+  'Miami': '迈阿密',
+  'Las Vegas': '拉斯维加斯',
+  
+  // 其他国际城市
+  'Tokyo': '东京',
+  'London': '伦敦',
+  'Paris': '巴黎',
+  'Seoul': '首尔',
+  'Sydney': '悉尼',
+  'Toronto': '多伦多',
+  
+  // 国家名称
   'China': '中国',
   'United States': '美国',
+  'United States of America': '美国',
   'United Kingdom': '英国',
   'Japan': '日本',
   'South Korea': '韩国',
-  'Singapore': '新加坡'
+  'Singapore': '新加坡',
+  'Australia': '澳大利亚',
+  'Canada': '加拿大',
+  'France': '法国',
+  'Germany': '德国'
+};
+
+// 缓存翻译结果，避免重复API调用
+const translationCache: { [key: string]: string } = {};
+
+// 使用百度翻译API自动翻译地名
+const translateLocationName = async (locationName: string): Promise<string> => {
+  // 先检查本地缓存
+  if (locationTranslations[locationName]) {
+    return locationTranslations[locationName];
+  }
+  
+  // 检查运行时缓存
+  if (translationCache[locationName]) {
+    return translationCache[locationName];
+  }
+  
+  try {
+    // 使用免费的翻译服务 - MyMemory Translation API
+    const response = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(locationName)}&langpair=en|zh`
+    );
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.responseStatus === 200 && data.responseData?.translatedText) {
+        const translated = data.responseData.translatedText;
+        // 缓存翻译结果
+        translationCache[locationName] = translated;
+        return translated;
+      }
+    }
+  } catch (error) {
+    console.warn('地名翻译API调用失败:', error);
+  }
+  
+  // 如果翻译失败，尝试使用简单的规则处理
+  return processLocationNameFallback(locationName);
+};
+
+// 备用地名处理逻辑
+const processLocationNameFallback = (locationName: string): string => {
+  // 移除常见的英文后缀
+  const cleanName = locationName
+    .replace(/ County$/, '县')
+    .replace(/ City$/, '市')
+    .replace(/ State$/, '州')
+    .replace(/ Province$/, '省');
+    
+  // 如果处理后还是英文，保持原样
+  return cleanName;
 };
 
 // 解析天气数据
-const parseWeatherData = (data: any): WeatherData => {
+const parseWeatherData = async (data: any): Promise<WeatherData> => {
   const current = data.current_condition[0];
   const location = data.nearest_area[0];
   const now = new Date();
@@ -122,25 +202,45 @@ const parseWeatherData = (data: any): WeatherData => {
     icon: isNight ? MOON_PHASE_ICONS[moonPhase] : '🌤️' 
   };
 
-  // 翻译地名
+  // 自动翻译地名
   const areaName = location.areaName[0].value;
   const countryName = location.country[0].value;
-  const translatedArea = locationTranslations[areaName] || areaName;
-  const translatedCountry = locationTranslations[countryName] || countryName;
   
-  // 翻译天气描述
-  const translatedWeatherDesc = weatherTranslations[weatherDesc] || weatherDesc;
+  try {
+    const translatedArea = await translateLocationName(areaName);
+    const translatedCountry = await translateLocationName(countryName);
+    
+    // 翻译天气描述
+    const translatedWeatherDesc = weatherTranslations[weatherDesc] || weatherDesc;
 
-  return {
-    location: `${translatedArea}, ${translatedCountry}`,
-    description: isNight ? `夜晚 - ${translatedWeatherDesc}` : translatedWeatherDesc,
-    temperature: current.temp_C,
-    condition: weatherInfo.condition as WeatherData['condition'],
-    icon: weatherInfo.icon,
-    humidity: current.humidity,
-    windSpeed: current.windspeedKmph,
-    moonPhase: isNight ? moonPhase : undefined
-  };
+    return {
+      location: `${translatedArea}, ${translatedCountry}`,
+      description: isNight ? `夜晚 - ${translatedWeatherDesc}` : translatedWeatherDesc,
+      temperature: current.temp_C,
+      condition: weatherInfo.condition as WeatherData['condition'],
+      icon: weatherInfo.icon,
+      humidity: current.humidity,
+      windSpeed: current.windspeedKmph,
+      moonPhase: isNight ? moonPhase : undefined
+    };
+  } catch (error) {
+    console.warn('地名翻译失败，使用备用方案:', error);
+    // 翻译失败时使用原有逻辑
+    const translatedArea = locationTranslations[areaName] || areaName;
+    const translatedCountry = locationTranslations[countryName] || countryName;
+    const translatedWeatherDesc = weatherTranslations[weatherDesc] || weatherDesc;
+
+    return {
+      location: `${translatedArea}, ${translatedCountry}`,
+      description: isNight ? `夜晚 - ${translatedWeatherDesc}` : translatedWeatherDesc,
+      temperature: current.temp_C,
+      condition: weatherInfo.condition as WeatherData['condition'],
+      icon: weatherInfo.icon,
+      humidity: current.humidity,
+      windSpeed: current.windspeedKmph,
+      moonPhase: isNight ? moonPhase : undefined
+    };
+  }
 };
 
 // 获取模拟天气数据
