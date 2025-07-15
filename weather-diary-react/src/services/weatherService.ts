@@ -20,18 +20,26 @@ const getCurrentPosition = (): Promise<GeolocationPosition> => {
 // 判断是否为夜晚
 const isNightTime = (date: Date): boolean => {
   const hour = date.getHours();
+  console.log('🕐 当前时间:', hour);
+  
   // 晚上6点到早上6点算作夜晚
   // 为了测试，我们也可以手动设置为夜晚模式
   const isNightByTime = hour >= 18 || hour < 6;
+  console.log('🌙 时间判断是否为夜晚:', isNightByTime);
   
   // 检查URL参数，允许手动切换夜晚模式
   const urlParams = new URLSearchParams(window.location.search);
   const forceNight = urlParams.get('night') === 'true';
+  console.log('🔗 URL强制夜晚模式:', forceNight);
   
   // 临时强制夜晚模式用于测试
   const testNightMode = true;
+  console.log('🧪 测试强制夜晚模式:', testNightMode);
   
-  return isNightByTime || forceNight || testNightMode;
+  const result = isNightByTime || forceNight || testNightMode;
+  console.log('🌟 最终夜晚模式判断结果:', result);
+  
+  return result;
 };
 
 // 获取天气数据
@@ -179,31 +187,39 @@ const processLocationNameFallback = (locationName: string): string => {
 
 // 解析天气数据
 const parseWeatherData = async (data: any): Promise<WeatherData> => {
+  console.log('🌤️ 开始解析天气数据...');
   const current = data.current_condition[0];
   const location = data.nearest_area[0];
   const now = new Date();
   const isNight = isNightTime(now);
   const moonPhase = calculateMoonPhase(now);
   
+  console.log('🌙 夜晚模式状态:', isNight);
+  console.log('🌕 月相:', moonPhase);
+  
   const weatherConditions = {
     'Sunny': { condition: isNight ? 'night' : 'sunny', icon: isNight ? MOON_PHASE_ICONS[moonPhase] : '☀️' },
     'Clear': { condition: isNight ? 'night' : 'clear', icon: isNight ? MOON_PHASE_ICONS[moonPhase] : '🌙' },
-    'Partly cloudy': { condition: 'cloudy', icon: isNight ? '☁️' : '⛅' },
-    'Cloudy': { condition: 'cloudy', icon: '☁️' },
-    'Overcast': { condition: 'cloudy', icon: '☁️' },
-    'Light rain': { condition: 'rainy', icon: '🌧️' },
-    'Moderate rain': { condition: 'rainy', icon: '🌧️' },
-    'Heavy rain': { condition: 'rainy', icon: '⛈️' },
-    'Thunderstorm': { condition: 'rainy', icon: '⛈️' },
-    'Light snow': { condition: 'snowy', icon: '🌨️' },
-    'Heavy snow': { condition: 'snowy', icon: '❄️' }
+    'Partly cloudy': { condition: isNight ? 'night' : 'cloudy', icon: isNight ? '☁️' : '⛅' },
+    'Cloudy': { condition: isNight ? 'night' : 'cloudy', icon: '☁️' },
+    'Overcast': { condition: isNight ? 'night' : 'cloudy', icon: '☁️' },
+    'Light rain': { condition: isNight ? 'night' : 'rainy', icon: '🌧️' },
+    'Moderate rain': { condition: isNight ? 'night' : 'rainy', icon: '🌧️' },
+    'Heavy rain': { condition: isNight ? 'night' : 'rainy', icon: '⛈️' },
+    'Thunderstorm': { condition: isNight ? 'night' : 'rainy', icon: '⛈️' },
+    'Light snow': { condition: isNight ? 'night' : 'snowy', icon: '🌨️' },
+    'Heavy snow': { condition: isNight ? 'night' : 'snowy', icon: '❄️' }
   };
 
   const weatherDesc = current.weatherDesc[0].value;
+  console.log('🌤️ 天气描述:', weatherDesc);
+  
   const weatherInfo = weatherConditions[weatherDesc as keyof typeof weatherConditions] || { 
     condition: isNight ? 'night' : 'cloudy', 
     icon: isNight ? MOON_PHASE_ICONS[moonPhase] : '🌤️' 
   };
+  
+  console.log('🎯 解析后的天气信息:', weatherInfo);
 
   // 自动翻译地名
   const areaName = location.areaName[0].value;
@@ -265,22 +281,25 @@ const getMockWeatherData = (): WeatherData => {
       location: '上海市', 
       description: isNight ? '夜晚 - 多云' : '多云', 
       temperature: '18', 
-      condition: 'cloudy' as const, 
-      icon: '☁️' 
+      condition: isNight ? 'night' as const : 'cloudy' as const, 
+      icon: '☁️',
+      moonPhase: isNight ? moonPhase : undefined
     },
     { 
       location: '广州市', 
       description: isNight ? '夜晚 - 小雨' : '小雨', 
       temperature: '25', 
-      condition: 'rainy' as const, 
-      icon: '🌧️' 
+      condition: isNight ? 'night' as const : 'rainy' as const, 
+      icon: '🌧️',
+      moonPhase: isNight ? moonPhase : undefined
     },
     { 
       location: '成都市', 
       description: isNight ? '夜晚 - 阴天' : '阴天', 
       temperature: '16', 
-      condition: 'cloudy' as const, 
-      icon: '⛅' 
+      condition: isNight ? 'night' as const : 'cloudy' as const, 
+      icon: '⛅',
+      moonPhase: isNight ? moonPhase : undefined
     }
   ];
 

@@ -65,7 +65,12 @@ const App: React.FC = () => {
   };
 
   const getWeatherTheme = () => {
-    if (!weather) return 'default';
+    if (!weather) {
+      console.log('🎨 主题检测: 天气数据为空，使用默认主题');
+      return 'default';
+    }
+    console.log('🎨 天气条件:', weather.condition);
+    console.log('🎨 当前主题:', weather.condition);
     return weather.condition;
   };
 
