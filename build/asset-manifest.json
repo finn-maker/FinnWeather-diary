@@ -1,13 +1,37 @@
 {
   "files": {
-    "main.css": "/weather-diary-react/static/css/main.c7cdba23.css",
-    "main.js": "/weather-diary-react/static/js/main.6eb4cf16.js",
-    "index.html": "/weather-diary-react/index.html",
-    "main.c7cdba23.css.map": "/weather-diary-react/static/css/main.c7cdba23.css.map",
-    "main.6eb4cf16.js.map": "/weather-diary-react/static/js/main.6eb4cf16.js.map"
+    "main.css": "/skills-communicate-using-markdown/static/css/main.fcc12a96.css",
+    "main.js": "/skills-communicate-using-markdown/static/js/main.1497246a.js",
+    "static/js/914.81e0c35d.chunk.js": "/skills-communicate-using-markdown/static/js/914.81e0c35d.chunk.js",
+    "static/js/834.73dd36b2.chunk.js": "/skills-communicate-using-markdown/static/js/834.73dd36b2.chunk.js",
+    "static/js/326.04d19639.chunk.js": "/skills-communicate-using-markdown/static/js/326.04d19639.chunk.js",
+    "static/js/390.07bcc23a.chunk.js": "/skills-communicate-using-markdown/static/js/390.07bcc23a.chunk.js",
+    "static/js/166.797e311e.chunk.js": "/skills-communicate-using-markdown/static/js/166.797e311e.chunk.js",
+    "static/js/579.210329aa.chunk.js": "/skills-communicate-using-markdown/static/js/579.210329aa.chunk.js",
+    "static/js/588.3585ed67.chunk.js": "/skills-communicate-using-markdown/static/js/588.3585ed67.chunk.js",
+    "static/js/794.4af53a9a.chunk.js": "/skills-communicate-using-markdown/static/js/794.4af53a9a.chunk.js",
+    "static/js/897.9ece22c4.chunk.js": "/skills-communicate-using-markdown/static/js/897.9ece22c4.chunk.js",
+    "static/js/562.2f2ccc5a.chunk.js": "/skills-communicate-using-markdown/static/js/562.2f2ccc5a.chunk.js",
+    "static/js/816.02fe0fed.chunk.js": "/skills-communicate-using-markdown/static/js/816.02fe0fed.chunk.js",
+    "static/js/27.d92c968f.chunk.js": "/skills-communicate-using-markdown/static/js/27.d92c968f.chunk.js",
+    "index.html": "/skills-communicate-using-markdown/index.html",
+    "main.fcc12a96.css.map": "/skills-communicate-using-markdown/static/css/main.fcc12a96.css.map",
+    "main.1497246a.js.map": "/skills-communicate-using-markdown/static/js/main.1497246a.js.map",
+    "914.81e0c35d.chunk.js.map": "/skills-communicate-using-markdown/static/js/914.81e0c35d.chunk.js.map",
+    "834.73dd36b2.chunk.js.map": "/skills-communicate-using-markdown/static/js/834.73dd36b2.chunk.js.map",
+    "326.04d19639.chunk.js.map": "/skills-communicate-using-markdown/static/js/326.04d19639.chunk.js.map",
+    "390.07bcc23a.chunk.js.map": "/skills-communicate-using-markdown/static/js/390.07bcc23a.chunk.js.map",
+    "166.797e311e.chunk.js.map": "/skills-communicate-using-markdown/static/js/166.797e311e.chunk.js.map",
+    "579.210329aa.chunk.js.map": "/skills-communicate-using-markdown/static/js/579.210329aa.chunk.js.map",
+    "588.3585ed67.chunk.js.map": "/skills-communicate-using-markdown/static/js/588.3585ed67.chunk.js.map",
+    "794.4af53a9a.chunk.js.map": "/skills-communicate-using-markdown/static/js/794.4af53a9a.chunk.js.map",
+    "897.9ece22c4.chunk.js.map": "/skills-communicate-using-markdown/static/js/897.9ece22c4.chunk.js.map",
+    "562.2f2ccc5a.chunk.js.map": "/skills-communicate-using-markdown/static/js/562.2f2ccc5a.chunk.js.map",
+    "816.02fe0fed.chunk.js.map": "/skills-communicate-using-markdown/static/js/816.02fe0fed.chunk.js.map",
+    "27.d92c968f.chunk.js.map": "/skills-communicate-using-markdown/static/js/27.d92c968f.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.c7cdba23.css",
-    "static/js/main.6eb4cf16.js"
+    "static/css/main.fcc12a96.css",
+    "static/js/main.1497246a.js"
   ]
 }

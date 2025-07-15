@@ -84,3 +84,71 @@ export const getCurrentDateString = (): string => {
     weekday: 'long'
   });
 }; 
+
+// 导出所有日记数据
+export const exportDiaryData = (): string => {
+  const entries = getDiaryEntries();
+  const exportData = {
+    version: '2.1.0',
+    exportTime: new Date().toISOString(),
+    totalEntries: entries.length,
+    entries: entries
+  };
+  return JSON.stringify(exportData, null, 2);
+};
+
+// 导入日记数据
+export const importDiaryData = (jsonData: string): { success: boolean; message: string; importedCount: number } => {
+  try {
+    const importData = JSON.parse(jsonData);
+    
+    // 验证数据格式
+    if (!importData.entries || !Array.isArray(importData.entries)) {
+      return { success: false, message: '数据格式不正确', importedCount: 0 };
+    }
+
+    // 获取现有数据
+    const existingEntries = getDiaryEntries();
+    const existingIds = new Set(existingEntries.map(entry => entry.id));
+    
+    // 过滤重复数据
+    const newEntries = importData.entries.filter((entry: DiaryEntry) => 
+      entry.id && entry.title && entry.content && !existingIds.has(entry.id)
+    );
+
+    if (newEntries.length === 0) {
+      return { success: false, message: '没有发现新的日记数据', importedCount: 0 };
+    }
+
+    // 合并数据
+    const mergedEntries = [...newEntries, ...existingEntries].slice(0, 100);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedEntries));
+    
+    return { 
+      success: true, 
+      message: `成功导入 ${newEntries.length} 条日记`,
+      importedCount: newEntries.length
+    };
+  } catch (error) {
+    return { 
+      success: false, 
+      message: '数据解析失败，请检查文件格式', 
+      importedCount: 0
+    };
+  }
+};
+
+// 下载备份文件
+export const downloadBackup = (): void => {
+  const data = exportDiaryData();
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `天气日记备份_${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}; 

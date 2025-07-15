@@ -20,8 +20,8 @@ const getCurrentPosition = (): Promise<GeolocationPosition> => {
 // 判断是否为夜晚
 const isNightTime = (date: Date): boolean => {
   const hour = date.getHours();
+  
   // 晚上6点到早上6点算作夜晚
-  // 为了测试，我们也可以手动设置为夜晚模式
   const isNightByTime = hour >= 18 || hour < 6;
   
   // 检查URL参数，允许手动切换夜晚模式
@@ -124,7 +124,8 @@ const locationTranslations: { [key: string]: string } = {
 };
 
 // 缓存翻译结果，避免重复API调用
-const translationCache: { [key: string]: string } = {};
+const translationCache: { [key: string]: { result: string; timestamp: number } } = {};
+const TRANSLATION_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24小时缓存
 
 // 使用百度翻译API自动翻译地名
 const translateLocationName = async (locationName: string): Promise<string> => {
@@ -134,8 +135,9 @@ const translateLocationName = async (locationName: string): Promise<string> => {
   }
   
   // 检查运行时缓存
-  if (translationCache[locationName]) {
-    return translationCache[locationName];
+  const cached = translationCache[locationName];
+  if (cached && (Date.now() - cached.timestamp) < TRANSLATION_CACHE_DURATION) {
+    return cached.result;
   }
   
   try {
@@ -149,7 +151,7 @@ const translateLocationName = async (locationName: string): Promise<string> => {
       if (data.responseStatus === 200 && data.responseData?.translatedText) {
         const translated = data.responseData.translatedText;
         // 缓存翻译结果
-        translationCache[locationName] = translated;
+        translationCache[locationName] = { result: translated, timestamp: Date.now() };
         return translated;
       }
     }
@@ -185,18 +187,19 @@ const parseWeatherData = async (data: any): Promise<WeatherData> => {
   const weatherConditions = {
     'Sunny': { condition: isNight ? 'night' : 'sunny', icon: isNight ? MOON_PHASE_ICONS[moonPhase] : '☀️' },
     'Clear': { condition: isNight ? 'night' : 'clear', icon: isNight ? MOON_PHASE_ICONS[moonPhase] : '🌙' },
-    'Partly cloudy': { condition: 'cloudy', icon: isNight ? '☁️' : '⛅' },
-    'Cloudy': { condition: 'cloudy', icon: '☁️' },
-    'Overcast': { condition: 'cloudy', icon: '☁️' },
-    'Light rain': { condition: 'rainy', icon: '🌧️' },
-    'Moderate rain': { condition: 'rainy', icon: '🌧️' },
-    'Heavy rain': { condition: 'rainy', icon: '⛈️' },
-    'Thunderstorm': { condition: 'rainy', icon: '⛈️' },
-    'Light snow': { condition: 'snowy', icon: '🌨️' },
-    'Heavy snow': { condition: 'snowy', icon: '❄️' }
+    'Partly cloudy': { condition: isNight ? 'night' : 'cloudy', icon: isNight ? '☁️' : '⛅' },
+    'Cloudy': { condition: isNight ? 'night' : 'cloudy', icon: '☁️' },
+    'Overcast': { condition: isNight ? 'night' : 'cloudy', icon: '☁️' },
+    'Light rain': { condition: isNight ? 'night' : 'rainy', icon: '🌧️' },
+    'Moderate rain': { condition: isNight ? 'night' : 'rainy', icon: '🌧️' },
+    'Heavy rain': { condition: isNight ? 'night' : 'rainy', icon: '⛈️' },
+    'Thunderstorm': { condition: isNight ? 'night' : 'rainy', icon: '⛈️' },
+    'Light snow': { condition: isNight ? 'night' : 'snowy', icon: '🌨️' },
+    'Heavy snow': { condition: isNight ? 'night' : 'snowy', icon: '❄️' }
   };
 
   const weatherDesc = current.weatherDesc[0].value;
+  
   const weatherInfo = weatherConditions[weatherDesc as keyof typeof weatherConditions] || { 
     condition: isNight ? 'night' : 'cloudy', 
     icon: isNight ? MOON_PHASE_ICONS[moonPhase] : '🌤️' 
@@ -262,27 +265,43 @@ const getMockWeatherData = (): WeatherData => {
       location: '上海市', 
       description: isNight ? '夜晚 - 多云' : '多云', 
       temperature: '18', 
-      condition: 'cloudy' as const, 
-      icon: '☁️' 
+      condition: isNight ? 'night' as const : 'cloudy' as const, 
+      icon: '☁️',
+      moonPhase: isNight ? moonPhase : undefined
     },
     { 
       location: '广州市', 
       description: isNight ? '夜晚 - 小雨' : '小雨', 
       temperature: '25', 
-      condition: 'rainy' as const, 
-      icon: '🌧️' 
+      condition: isNight ? 'night' as const : 'rainy' as const, 
+      icon: '🌧️',
+      moonPhase: isNight ? moonPhase : undefined
     },
     { 
       location: '成都市', 
       description: isNight ? '夜晚 - 阴天' : '阴天', 
       temperature: '16', 
-      condition: 'cloudy' as const, 
-      icon: '⛅' 
+      condition: isNight ? 'night' as const : 'cloudy' as const, 
+      icon: '⛅',
+      moonPhase: isNight ? moonPhase : undefined
     }
   ];
 
   return mockWeatherData[Math.floor(Math.random() * mockWeatherData.length)];
 };
+
+// 天气数据缓存
+let weatherCache: {
+  data: WeatherData | null;
+  timestamp: number;
+  location: string;
+} = {
+  data: null,
+  timestamp: 0,
+  location: ''
+};
+
+const CACHE_DURATION = 10 * 60 * 1000; // 10分钟缓存
 
 // 主函数：获取天气数据
 export const getWeatherData = async (): Promise<WeatherData> => {
@@ -290,13 +309,39 @@ export const getWeatherData = async (): Promise<WeatherData> => {
     // 获取用户位置
     const position = await getCurrentPosition();
     const { latitude, longitude } = position.coords;
+    const locationKey = `${latitude.toFixed(2)},${longitude.toFixed(2)}`;
+    
+    // 检查缓存
+    const now = Date.now();
+    if (
+      weatherCache.data && 
+      weatherCache.location === locationKey &&
+      (now - weatherCache.timestamp) < CACHE_DURATION
+    ) {
+      console.log('🚀 使用缓存的天气数据');
+      return weatherCache.data;
+    }
 
+    console.log('🌐 从API获取新的天气数据');
     // 获取天气数据
     const weatherData = await fetchWeatherData(latitude, longitude);
+    
+    // 更新缓存
+    weatherCache = {
+      data: weatherData,
+      timestamp: now,
+      location: locationKey
+    };
+    
     return weatherData;
 
   } catch (error) {
     console.error('获取天气失败:', error);
+    // 如果有缓存数据，即使过期也使用
+    if (weatherCache.data) {
+      console.log('🔄 使用过期的缓存数据');
+      return weatherCache.data;
+    }
     // 使用模拟数据作为fallback
     return getMockWeatherData();
   }

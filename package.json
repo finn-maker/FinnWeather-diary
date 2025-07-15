@@ -1,6 +1,6 @@
 {
   "name": "weather-diary-react",
-  "version": "0.1.0",
+  "version": "2.1.0",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.11.1",
@@ -16,6 +16,7 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "axios": "^1.6.2",
+    "firebase": "^11.10.0",
     "framer-motion": "^10.16.16",
     "lucide-react": "^0.294.0",
     "react": "^19.1.0",
@@ -25,14 +26,16 @@
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },
-  "homepage": "https://你的Gitee用户名.gitee.io/weather-diary-react",
+  "homepage": "https://finn-maker.github.io/skills-communicate-using-markdown/",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "setup-firebase": "node setup-firebase.js",
+    "config": "node setup-firebase.js"
   },
   "eslintConfig": {
     "extends": [

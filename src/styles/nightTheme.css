@@ -37,6 +37,7 @@
   height: 80px;
   z-index: 1;
   pointer-events: none;
+  /* 确保不会遮挡隐私状态组件 */
 }
 
 /* 月亮动画 */
@@ -99,7 +100,14 @@
 }
 
 .night-theme .MuiCard-root .MuiTypography-root.MuiTypography-body2 {
-  color: #b0b0b0 !important;
+  color: #d0d0d0 !important;
+}
+
+/* 夜晚主题下的日记内容样式 */
+.night-theme .MuiCard-root .MuiTypography-root[color="text.primary"] {
+  color: #f0f0f0 !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* 夜晚主题下的输入框样式 */
@@ -310,4 +318,40 @@
   .night-theme::before {
     background-size: 200px 100px;
   }
+}
+
+/* 确保隐私状态组件始终显示在最顶层 */
+.privacy-status-wrapper,
+.privacy-status,
+.privacy-details {
+  z-index: 99999 !important;
+  position: relative !important;
+}
+
+.privacy-details {
+  z-index: 100000 !important;
+}
+
+/* 夜晚主题下特别确保隐私组件不被遮挡 */
+.night-theme .privacy-status-wrapper,
+.night-theme .privacy-status,
+.night-theme .privacy-details {
+  z-index: 99999 !important;
+  position: relative !important;
+}
+
+.night-theme .privacy-details {
+  z-index: 100000 !important;
+}
+
+/* 当隐私弹窗显示时，隐藏月亮装饰 */
+.privacy-overlay ~ .moon-container,
+.privacy-details ~ .moon-container {
+  display: none !important;
+}
+
+/* 当隐私弹窗显示时，降低星星背景的可见度 */
+.privacy-overlay ~ .night-theme::before,
+.privacy-details ~ .night-theme::before {
+  opacity: 0.1 !important;
 } 
