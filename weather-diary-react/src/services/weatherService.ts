@@ -20,26 +20,15 @@ const getCurrentPosition = (): Promise<GeolocationPosition> => {
 // 判断是否为夜晚
 const isNightTime = (date: Date): boolean => {
   const hour = date.getHours();
-  console.log('🕐 当前时间:', hour);
   
   // 晚上6点到早上6点算作夜晚
-  // 为了测试，我们也可以手动设置为夜晚模式
   const isNightByTime = hour >= 18 || hour < 6;
-  console.log('🌙 时间判断是否为夜晚:', isNightByTime);
   
   // 检查URL参数，允许手动切换夜晚模式
   const urlParams = new URLSearchParams(window.location.search);
   const forceNight = urlParams.get('night') === 'true';
-  console.log('🔗 URL强制夜晚模式:', forceNight);
   
-  // 临时强制夜晚模式用于测试（已禁用）
-  const testNightMode = false;
-  console.log('🧪 测试强制夜晚模式:', testNightMode);
-  
-  const result = isNightByTime || forceNight || testNightMode;
-  console.log('🌟 最终夜晚模式判断结果:', result);
-  
-  return result;
+  return isNightByTime || forceNight;
 };
 
 // 获取天气数据
@@ -135,7 +124,8 @@ const locationTranslations: { [key: string]: string } = {
 };
 
 // 缓存翻译结果，避免重复API调用
-const translationCache: { [key: string]: string } = {};
+const translationCache: { [key: string]: { result: string; timestamp: number } } = {};
+const TRANSLATION_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24小时缓存
 
 // 使用百度翻译API自动翻译地名
 const translateLocationName = async (locationName: string): Promise<string> => {
@@ -145,8 +135,9 @@ const translateLocationName = async (locationName: string): Promise<string> => {
   }
   
   // 检查运行时缓存
-  if (translationCache[locationName]) {
-    return translationCache[locationName];
+  const cached = translationCache[locationName];
+  if (cached && (Date.now() - cached.timestamp) < TRANSLATION_CACHE_DURATION) {
+    return cached.result;
   }
   
   try {
@@ -160,7 +151,7 @@ const translateLocationName = async (locationName: string): Promise<string> => {
       if (data.responseStatus === 200 && data.responseData?.translatedText) {
         const translated = data.responseData.translatedText;
         // 缓存翻译结果
-        translationCache[locationName] = translated;
+        translationCache[locationName] = { result: translated, timestamp: Date.now() };
         return translated;
       }
     }
@@ -187,15 +178,11 @@ const processLocationNameFallback = (locationName: string): string => {
 
 // 解析天气数据
 const parseWeatherData = async (data: any): Promise<WeatherData> => {
-  console.log('🌤️ 开始解析天气数据...');
   const current = data.current_condition[0];
   const location = data.nearest_area[0];
   const now = new Date();
   const isNight = isNightTime(now);
   const moonPhase = calculateMoonPhase(now);
-  
-  console.log('🌙 夜晚模式状态:', isNight);
-  console.log('🌕 月相:', moonPhase);
   
   const weatherConditions = {
     'Sunny': { condition: isNight ? 'night' : 'sunny', icon: isNight ? MOON_PHASE_ICONS[moonPhase] : '☀️' },
@@ -212,14 +199,11 @@ const parseWeatherData = async (data: any): Promise<WeatherData> => {
   };
 
   const weatherDesc = current.weatherDesc[0].value;
-  console.log('🌤️ 天气描述:', weatherDesc);
   
   const weatherInfo = weatherConditions[weatherDesc as keyof typeof weatherConditions] || { 
     condition: isNight ? 'night' : 'cloudy', 
     icon: isNight ? MOON_PHASE_ICONS[moonPhase] : '🌤️' 
   };
-  
-  console.log('🎯 解析后的天气信息:', weatherInfo);
 
   // 自动翻译地名
   const areaName = location.areaName[0].value;
@@ -306,19 +290,58 @@ const getMockWeatherData = (): WeatherData => {
   return mockWeatherData[Math.floor(Math.random() * mockWeatherData.length)];
 };
 
+// 天气数据缓存
+let weatherCache: {
+  data: WeatherData | null;
+  timestamp: number;
+  location: string;
+} = {
+  data: null,
+  timestamp: 0,
+  location: ''
+};
+
+const CACHE_DURATION = 10 * 60 * 1000; // 10分钟缓存
+
 // 主函数：获取天气数据
 export const getWeatherData = async (): Promise<WeatherData> => {
   try {
     // 获取用户位置
     const position = await getCurrentPosition();
     const { latitude, longitude } = position.coords;
+    const locationKey = `${latitude.toFixed(2)},${longitude.toFixed(2)}`;
+    
+    // 检查缓存
+    const now = Date.now();
+    if (
+      weatherCache.data && 
+      weatherCache.location === locationKey &&
+      (now - weatherCache.timestamp) < CACHE_DURATION
+    ) {
+      console.log('🚀 使用缓存的天气数据');
+      return weatherCache.data;
+    }
 
+    console.log('🌐 从API获取新的天气数据');
     // 获取天气数据
     const weatherData = await fetchWeatherData(latitude, longitude);
+    
+    // 更新缓存
+    weatherCache = {
+      data: weatherData,
+      timestamp: now,
+      location: locationKey
+    };
+    
     return weatherData;
 
   } catch (error) {
     console.error('获取天气失败:', error);
+    // 如果有缓存数据，即使过期也使用
+    if (weatherCache.data) {
+      console.log('🔄 使用过期的缓存数据');
+      return weatherCache.data;
+    }
     // 使用模拟数据作为fallback
     return getMockWeatherData();
   }

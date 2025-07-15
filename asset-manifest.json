@@ -1,13 +1,23 @@
 {
   "files": {
     "main.css": "/skills-communicate-using-markdown/static/css/main.58c1b2fb.css",
-    "main.js": "/skills-communicate-using-markdown/static/js/main.b3d95474.js",
+    "main.js": "/skills-communicate-using-markdown/static/js/main.a4edb964.js",
+    "static/js/914.7693795b.chunk.js": "/skills-communicate-using-markdown/static/js/914.7693795b.chunk.js",
+    "static/js/834.62f5067f.chunk.js": "/skills-communicate-using-markdown/static/js/834.62f5067f.chunk.js",
+    "static/js/326.04d19639.chunk.js": "/skills-communicate-using-markdown/static/js/326.04d19639.chunk.js",
+    "static/js/676.aaf0cf9f.chunk.js": "/skills-communicate-using-markdown/static/js/676.aaf0cf9f.chunk.js",
+    "static/js/241.03c2c80d.chunk.js": "/skills-communicate-using-markdown/static/js/241.03c2c80d.chunk.js",
     "index.html": "/skills-communicate-using-markdown/index.html",
     "main.58c1b2fb.css.map": "/skills-communicate-using-markdown/static/css/main.58c1b2fb.css.map",
-    "main.b3d95474.js.map": "/skills-communicate-using-markdown/static/js/main.b3d95474.js.map"
+    "main.a4edb964.js.map": "/skills-communicate-using-markdown/static/js/main.a4edb964.js.map",
+    "914.7693795b.chunk.js.map": "/skills-communicate-using-markdown/static/js/914.7693795b.chunk.js.map",
+    "834.62f5067f.chunk.js.map": "/skills-communicate-using-markdown/static/js/834.62f5067f.chunk.js.map",
+    "326.04d19639.chunk.js.map": "/skills-communicate-using-markdown/static/js/326.04d19639.chunk.js.map",
+    "676.aaf0cf9f.chunk.js.map": "/skills-communicate-using-markdown/static/js/676.aaf0cf9f.chunk.js.map",
+    "241.03c2c80d.chunk.js.map": "/skills-communicate-using-markdown/static/js/241.03c2c80d.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.58c1b2fb.css",
-    "static/js/main.b3d95474.js"
+    "static/js/main.a4edb964.js"
   ]
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { 
   Container, 
   Box, 
@@ -8,17 +8,20 @@ import {
   Toolbar,
   IconButton,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Skeleton
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Refresh, Menu } from '@mui/icons-material';
 import WeatherHeader from './components/WeatherHeader';
-import DiaryForm from './components/DiaryForm';
-import DiaryHistory from './components/DiaryHistory';
-import ThemeToggle from './components/ThemeToggle';
 import { WeatherData, DiaryEntry } from './types';
 import { getWeatherData } from './services/weatherService';
 import { saveDiaryEntry, getDiaryEntries } from './services/diaryService';
+
+// 懒加载组件
+const DiaryForm = lazy(() => import('./components/DiaryForm'));
+const DiaryHistory = lazy(() => import('./components/DiaryHistory'));
+const ThemeToggle = lazy(() => import('./components/ThemeToggle'));
 import './styles/nightTheme.css';
 import './styles/fonts.css';
 import './styles/chipColors.css';
@@ -140,7 +143,21 @@ const App: React.FC = () => {
                 borderRadius: 3
               }}
             >
-              <DiaryForm onSave={handleSaveDiary} weather={weather} />
+              <Suspense fallback={
+                <Box>
+                  <Skeleton variant="text" width="60%" height={32} sx={{ mb: 2 }} />
+                  <Skeleton variant="rectangular" width="100%" height={60} sx={{ mb: 2 }} />
+                  <Skeleton variant="rectangular" width="100%" height={120} sx={{ mb: 2 }} />
+                  <Box display="flex" gap={1} mb={2}>
+                    {[1,2,3,4,5,6].map(i => (
+                      <Skeleton key={i} variant="rounded" width={60} height={32} />
+                    ))}
+                  </Box>
+                  <Skeleton variant="rectangular" width="100%" height={40} />
+                </Box>
+              }>
+                <DiaryForm onSave={handleSaveDiary} weather={weather} />
+              </Suspense>
             </Paper>
           </motion.div>
 
@@ -159,7 +176,30 @@ const App: React.FC = () => {
                 borderRadius: 3
               }}
             >
-              <DiaryHistory entries={diaryEntries} />
+              <Suspense fallback={
+                <Box>
+                  <Box display="flex" alignItems="center" gap={1} mb={2}>
+                    <Skeleton variant="rectangular" width={24} height={24} />
+                    <Skeleton variant="text" width="40%" height={24} />
+                    <Skeleton variant="text" width="20%" height={20} />
+                  </Box>
+                  {[1,2,3].map(i => (
+                    <Box key={i} sx={{ mb: 2, p: 2, border: '1px solid #eee', borderRadius: 2 }}>
+                      <Box display="flex" justifyContent="space-between" mb={1}>
+                        <Skeleton variant="text" width="30%" height={20} />
+                        <Skeleton variant="circular" width={20} height={20} />
+                      </Box>
+                      <Skeleton variant="text" width="60%" height={16} sx={{ mb: 1 }} />
+                      <Box display="flex" gap={1}>
+                        <Skeleton variant="rounded" width={60} height={24} />
+                        <Skeleton variant="rounded" width={80} height={24} />
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              }>
+                <DiaryHistory entries={diaryEntries} />
+              </Suspense>
             </Paper>
           </motion.div>
         </Box>
@@ -171,7 +211,9 @@ const App: React.FC = () => {
       )}
       
       {/* 主题切换按钮 */}
-      <ThemeToggle />
+      <Suspense fallback={null}>
+        <ThemeToggle />
+      </Suspense>
     </Box>
   );
 };
