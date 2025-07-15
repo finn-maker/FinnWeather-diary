@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>天气日记本</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部天气栏 -->
+        <header class="weather-header">
+            <div class="weather-info">
+                <div class="weather-icon-container">
+                    <div class="weather-icon" id="weather-icon">🌤️</div>
+                </div>
+                <div class="weather-details">
+                    <div class="location" id="location">获取位置中...</div>
+                    <div class="weather-desc" id="weather-desc">获取天气中...</div>
+                    <div class="temperature" id="temperature">--°C</div>
+                </div>
+            </div>
+            <button class="refresh-weather" id="refresh-weather">🔄</button>
+        </header>
+
+        <!-- 主要内容区域 -->
+        <main class="diary-container">
+            <div class="diary-header">
+                <h1 class="diary-title">我的天气日记</h1>
+                <div class="date-display" id="current-date"></div>
+            </div>
+
+            <!-- 日记输入区域 -->
+            <div class="diary-input-section">
+                <div class="input-group">
+                    <label for="diary-title-input">今天的标题</label>
+                    <input type="text" id="diary-title-input" placeholder="给今天起个标题吧..." maxlength="50">
+                </div>
+                
+                <div class="input-group">
+                    <label for="diary-content">记录今天</label>
+                    <textarea id="diary-content" placeholder="今天发生了什么有趣的事情？心情如何？和天气有关系吗？"></textarea>
+                </div>
+
+                <div class="diary-meta">
+                    <div class="mood-selector">
+                        <label>今天心情：</label>
+                        <div class="mood-options">
+                            <button class="mood-btn" data-mood="happy">😊</button>
+                            <button class="mood-btn" data-mood="sad">😢</button>
+                            <button class="mood-btn" data-mood="excited">🤩</button>
+                            <button class="mood-btn" data-mood="calm">😌</button>
+                            <button class="mood-btn" data-mood="angry">😤</button>
+                            <button class="mood-btn" data-mood="tired">😴</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="save-diary-btn" id="save-diary">💾 保存今天的日记</button>
+            </div>
+
+            <!-- 历史日记列表 -->
+            <div class="diary-history">
+                <h2>历史记录</h2>
+                <div class="history-list" id="history-list">
+                    <!-- 历史日记将在这里动态加载 -->
+                </div>
+            </div>
+        </main>
+
+        <!-- 天气背景装饰 -->
+        <div class="weather-decoration" id="weather-decoration"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
