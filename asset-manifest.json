@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/skills-communicate-using-markdown/static/css/main.c7cdba23.css",
-    "main.js": "/skills-communicate-using-markdown/static/js/main.1ed47a91.js",
+    "main.css": "/skills-communicate-using-markdown/static/css/main.58c1b2fb.css",
+    "main.js": "/skills-communicate-using-markdown/static/js/main.b3d95474.js",
     "index.html": "/skills-communicate-using-markdown/index.html",
-    "main.c7cdba23.css.map": "/skills-communicate-using-markdown/static/css/main.c7cdba23.css.map",
-    "main.1ed47a91.js.map": "/skills-communicate-using-markdown/static/js/main.1ed47a91.js.map"
+    "main.58c1b2fb.css.map": "/skills-communicate-using-markdown/static/css/main.58c1b2fb.css.map",
+    "main.b3d95474.js.map": "/skills-communicate-using-markdown/static/js/main.b3d95474.js.map"
   },
   "entrypoints": [
-    "static/css/main.c7cdba23.css",
-    "static/js/main.1ed47a91.js"
+    "static/css/main.58c1b2fb.css",
+    "static/js/main.b3d95474.js"
   ]
 }

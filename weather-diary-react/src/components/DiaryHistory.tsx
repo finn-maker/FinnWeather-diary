@@ -116,35 +116,78 @@ const DiaryHistory: React.FC<DiaryHistoryProps> = ({ entries }) => {
                   </Box>
                 </Box>
 
-                {/* 日期和天气信息 */}
-                <Box display="flex" alignItems="center" gap={2} mb={1}>
-                  <Box display="flex" alignItems="center" gap={0.5}>
+                {/* 日期和天气信息 - 响应式布局 */}
+                <Box sx={{ mb: 2 }}>
+                  {/* 第一行：日期 */}
+                  <Box display="flex" alignItems="center" gap={0.5} mb={1}>
                     <Event fontSize="small" color="action" />
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ 
+                        fontFamily: '"Noto Sans SC", sans-serif',
+                        fontWeight: 500 
+                      }}
+                    >
                       {formatDate(entry.timestamp)}
                     </Typography>
                   </Box>
                   
-                  <Box display="flex" alignItems="center" gap={0.5}>
-                    <LocationOn fontSize="small" color="action" />
-                    <Typography variant="caption" color="text.secondary">
-                      {entry.weather.location}
-                    </Typography>
+                  {/* 第二行：地点和温度 */}
+                  <Box 
+                    display="flex" 
+                    alignItems="center" 
+                    gap={2} 
+                    mb={1}
+                    sx={{ flexWrap: { xs: 'wrap', sm: 'nowrap' } }}
+                  >
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                      <LocationOn fontSize="small" color="action" />
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary"
+                        sx={{ 
+                          fontFamily: '"Noto Sans SC", sans-serif',
+                          fontWeight: 400,
+                          minWidth: 'fit-content'
+                        }}
+                      >
+                        {entry.weather.location}
+                      </Typography>
+                    </Box>
+                    
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                      <Thermostat fontSize="small" color="action" />
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary"
+                        sx={{ 
+                          fontFamily: '"Noto Sans SC", sans-serif',
+                          fontWeight: 500 
+                        }}
+                      >
+                        {entry.weather.temperature}°C
+                      </Typography>
+                    </Box>
                   </Box>
                   
-                  <Box display="flex" alignItems="center" gap={0.5}>
-                    <Thermostat fontSize="small" color="action" />
-                    <Typography variant="caption" color="text.secondary">
-                      {entry.weather.temperature}°C
-                    </Typography>
+                  {/* 第三行：天气描述 */}
+                  <Box>
+                    <Chip
+                      label={`${entry.weather.icon} ${entry.weather.description}`}
+                      size="small"
+                      variant="outlined"
+                      data-weather-info="description"
+                      sx={{
+                        fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                        fontFamily: '"Noto Sans SC", sans-serif',
+                        fontWeight: 500,
+                        '& .MuiChip-label': {
+                          fontFamily: '"Noto Sans SC", sans-serif'
+                        }
+                      }}
+                    />
                   </Box>
-                  
-                  <Chip
-                    label={`${entry.weather.icon} ${entry.weather.description}`}
-                    size="small"
-                    variant="outlined"
-                    data-weather-info="description"
-                  />
                 </Box>
 
                 {/* 展开的内容 */}
@@ -152,12 +195,19 @@ const DiaryHistory: React.FC<DiaryHistoryProps> = ({ entries }) => {
                   <Divider sx={{ my: 1 }} />
                   <Typography 
                     variant="body2" 
-                    color="text.secondary"
+                    color="text.primary"
                     sx={{ 
                       whiteSpace: 'pre-wrap',
                       lineHeight: 1.6,
                       maxHeight: 200,
-                      overflow: 'auto'
+                      overflow: 'auto',
+                      fontFamily: '"Noto Sans SC", sans-serif',
+                      fontSize: { xs: '0.875rem', sm: '0.9rem' },
+                      fontWeight: 400,
+                      padding: 1,
+                      backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                      borderRadius: 1,
+                      border: '1px solid rgba(0, 0, 0, 0.05)'
                     }}
                   >
                     {entry.content}
