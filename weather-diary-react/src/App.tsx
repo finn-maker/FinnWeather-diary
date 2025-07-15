@@ -185,7 +185,7 @@ const getWeatherGradient = (condition: string) => {
     case 'clear':
       return '#ce93d8 0%, #9c27b0 100%';
     case 'night':
-      return '#2c3e50 0%, #34495e 50%, #2c3e50 100%';
+      return '#1a252f 0%, #2c3e50 50%, #1a252f 100%';
     default:
       return '#667eea 0%, #764ba2 100%';
   }

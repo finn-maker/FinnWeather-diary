@@ -88,8 +88,8 @@ const parseWeatherData = (data: any): WeatherData => {
   };
 };
 
-// 使用模拟天气数据
-const useMockWeatherData = (): WeatherData => {
+// 获取模拟天气数据
+const getMockWeatherData = (): WeatherData => {
   const now = new Date();
   const isNight = isNightTime(now);
   const moonPhase = calculateMoonPhase(now);
@@ -143,6 +143,6 @@ export const getWeatherData = async (): Promise<WeatherData> => {
   } catch (error) {
     console.error('获取天气失败:', error);
     // 使用模拟数据作为fallback
-    return useMockWeatherData();
+    return getMockWeatherData();
   }
 }; 
