@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/weather-diary-react/static/css/main.c7cdba23.css",
+    "main.js": "/weather-diary-react/static/js/main.b5960584.js",
+    "index.html": "/weather-diary-react/index.html",
+    "main.c7cdba23.css.map": "/weather-diary-react/static/css/main.c7cdba23.css.map",
+    "main.b5960584.js.map": "/weather-diary-react/static/js/main.b5960584.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.c7cdba23.css",
+    "static/js/main.b5960584.js"
+  ]
+}
