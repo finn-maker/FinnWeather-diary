@@ -26,7 +26,8 @@ import {
   Thermometer
 } from 'lucide-react';
 import { DiaryEntry } from '../types';
-import { deleteDiaryEntry, downloadBackup, importDiaryData, formatDate } from '../services/diaryService';
+import { downloadBackup, importDiaryData, formatDate } from '../services/diaryService';
+import { deleteHybridDiary } from '../services/hybridDiaryService';
 
 interface DiaryHistoryProps {
   entries: DiaryEntry[];
@@ -47,13 +48,17 @@ const DiaryHistory: React.FC<DiaryHistoryProps> = ({ entries, onUpdate }) => {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const handleDelete = (id: string) => {
-    deleteDiaryEntry(id);
-    if (onUpdate) {
-      onUpdate();
-    } else {
-      // 备用方案：刷新页面
-      window.location.reload();
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteHybridDiary(id);
+      if (onUpdate) {
+        onUpdate();
+      } else {
+        // 备用方案：刷新页面
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('删除日记失败:', error);
     }
   };
 

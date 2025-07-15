@@ -5,15 +5,13 @@ import { getAuth } from 'firebase/auth';
 
 // Firebase配置 - 你需要从Firebase控制台获取这些值
 const firebaseConfig = {
-  // 从Firebase控制台获取配置信息
-  // 访问 https://console.firebase.google.com/
-  // 创建项目后在项目设置中找到这些配置
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "your-api-key",
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "your-project.firebaseapp.com",
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "your-project-id",
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "your-project.appspot.com",
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || "your-app-id"
+  // Firebase配置 - 直接配置方式
+  apiKey: "AIzaSyAoNc1V1SNxvpd5Z5PpRgjZoRIDj7wsARA",
+  authDomain: "weather-diary-app-69053.firebaseapp.com",
+  projectId: "weather-diary-app-69053",
+  storageBucket: "weather-diary-app-69053.firebasestorage.app",
+  messagingSenderId: "663994075664",
+  appId: "1:663994075664:web:8ffe5af1809760ccfd5895"
 };
 
 // 初始化Firebase

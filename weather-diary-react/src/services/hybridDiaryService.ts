@@ -40,6 +40,11 @@ let storageStatus: StorageStatus = {
 // 云端数据监听取消函数
 let unsubscribeCloudListener: (() => void) | null = null;
 
+// 缓存的合并数据
+let cachedMergedEntries: DiaryEntry[] | null = null;
+let lastCacheTime: number = 0;
+const CACHE_DURATION = 30000; // 30秒缓存
+
 // 初始化混合存储
 export const initializeHybridStorage = async (): Promise<StorageStatus> => {
   try {
@@ -66,8 +71,15 @@ export const initializeHybridStorage = async (): Promise<StorageStatus> => {
       
       console.log('☁️ 云端存储已启用，使用混合模式');
       
-      // 启动数据同步
-      await performInitialSync();
+      // 检查是否需要初始同步（仅在首次使用时）
+      if (shouldPerformInitialSync()) {
+        console.log('🔄 检测到首次使用云端存储，开始同步本地数据...');
+        await performInitialSync();
+        // 标记已完成初始同步
+        localStorage.setItem('hybrid_storage_initialized', 'true');
+      } else {
+        console.log('✅ 云端存储已初始化，跳过初始同步');
+      }
       
       return storageStatus;
     } catch (authError) {
@@ -82,16 +94,50 @@ export const initializeHybridStorage = async (): Promise<StorageStatus> => {
   }
 };
 
+// 检查是否需要执行初始同步
+const shouldPerformInitialSync = (): boolean => {
+  // 如果从未初始化过云端存储，需要同步
+  const hasInitialized = localStorage.getItem('hybrid_storage_initialized');
+  if (!hasInitialized) {
+    console.log('🔍 检查同步需求: 从未初始化，需要同步');
+    return true;
+  }
+  
+  // 检查是否有本地数据需要上传
+  const localEntries = getLocalDiaries();
+  const lastSyncTimestamp = localStorage.getItem('last_sync_timestamp');
+  
+  if (localEntries.length === 0) {
+    console.log('🔍 检查同步需求: 本地无数据，无需同步');
+    return false;
+  }
+  
+  // 如果有最后同步时间记录，不需要再次同步
+  if (lastSyncTimestamp) {
+    console.log('🔍 检查同步需求: 已有同步记录，无需重复同步');
+    return false;
+  }
+  
+  console.log('🔍 检查同步需求: 有本地数据但未同步过，需要同步');
+  return true;
+};
+
 // 执行初始同步
 const performInitialSync = async (): Promise<void> => {
-  if (storageStatus.syncing) return;
+  if (storageStatus.syncing) {
+    console.log('⚠️ 正在同步中，跳过重复同步');
+    return;
+  }
   
   try {
     storageStatus.syncing = true;
     console.log('🔄 开始初始同步...');
     
     const syncResult = await syncLocalToCloud();
-    storageStatus.lastSync = Date.now();
+    const currentTime = Date.now();
+    
+    storageStatus.lastSync = currentTime;
+    localStorage.setItem('last_sync_timestamp', currentTime.toString());
     
     console.log(`✅ 同步完成: 成功 ${syncResult.success} 条, 失败 ${syncResult.failed} 条`);
   } catch (error) {
@@ -101,43 +147,60 @@ const performInitialSync = async (): Promise<void> => {
   }
 };
 
+// 清除缓存
+const clearCache = (): void => {
+  cachedMergedEntries = null;
+  lastCacheTime = 0;
+  console.log('🧹 已清除日记缓存');
+};
+
 // 保存日记 (混合模式)
 export const saveHybridDiary = async (entry: Omit<DiaryEntry, 'id' | 'timestamp'>): Promise<DiaryEntry> => {
-  // 始终先保存到本地
-  const localEntry = saveLocalDiary(entry);
+  // 清除缓存
+  clearCache();
   
-  // 如果云端可用，尝试保存到云端
+  // 如果云端可用，优先保存到云端
   if (storageStatus.cloudAvailable && storageStatus.mode === 'hybrid') {
     try {
       const cloudEntry = await saveCloudDiary(entry);
-      console.log('✅ 日记已同时保存到本地和云端');
-      return cloudEntry; // 返回云端ID
+      console.log('✅ 日记已保存到云端（混合模式）');
+      return cloudEntry;
     } catch (error) {
-      console.warn('⚠️ 云端保存失败，仅保存到本地:', error);
+      console.warn('⚠️ 云端保存失败，降级到本地保存:', error);
       // 降级到本地模式
       storageStatus.cloudAvailable = false;
+      const localEntry = saveLocalDiary(entry);
+      console.log('✅ 日记已保存到本地（降级模式）');
       return localEntry;
     }
   }
   
+  // 纯本地模式
+  const localEntry = saveLocalDiary(entry);
+  console.log('✅ 日记已保存到本地');
   return localEntry;
 };
 
 // 获取日记列表 (混合模式)
 export const getHybridDiaries = async (): Promise<DiaryEntry[]> => {
+  // 如果有缓存且未过期，直接返回缓存
+  const now = Date.now();
+  if (cachedMergedEntries && (now - lastCacheTime) < CACHE_DURATION) {
+    console.log('📚 使用缓存的日记数据');
+    return cachedMergedEntries;
+  }
+
   // 如果云端可用，优先从云端获取
   if (storageStatus.cloudAvailable && storageStatus.mode === 'hybrid') {
     try {
       const cloudEntries = await getCloudDiaries();
+      console.log(`📊 混合模式: 从云端获取 ${cloudEntries.length} 条日记`);
       
-      // 同时获取本地数据进行合并
-      const localEntries = getLocalDiaries();
+      // 更新缓存
+      cachedMergedEntries = cloudEntries;
+      lastCacheTime = now;
       
-      // 合并数据（云端优先，去重）
-      const mergedEntries = mergeEntries(cloudEntries, localEntries);
-      
-      console.log(`📊 获取数据: 云端 ${cloudEntries.length} 条, 本地 ${localEntries.length} 条, 合并后 ${mergedEntries.length} 条`);
-      return mergedEntries;
+      return cloudEntries;
     } catch (error) {
       console.warn('⚠️ 云端获取失败，降级到本地:', error);
       storageStatus.cloudAvailable = false;
@@ -145,11 +208,21 @@ export const getHybridDiaries = async (): Promise<DiaryEntry[]> => {
   }
   
   // 从本地获取
-  return getLocalDiaries();
+  const localEntries = getLocalDiaries();
+  console.log(`📊 本地模式: 获取 ${localEntries.length} 条日记`);
+  
+  // 更新缓存
+  cachedMergedEntries = localEntries;
+  lastCacheTime = now;
+  
+  return localEntries;
 };
 
 // 删除日记 (混合模式)
 export const deleteHybridDiary = async (id: string): Promise<void> => {
+  // 清除缓存
+  clearCache();
+  
   // 先从本地删除
   deleteLocalDiary(id);
   
@@ -166,6 +239,9 @@ export const deleteHybridDiary = async (id: string): Promise<void> => {
 
 // 更新日记 (混合模式)
 export const updateHybridDiary = async (id: string, updates: Partial<DiaryEntry>): Promise<DiaryEntry | null> => {
+  // 清除缓存
+  clearCache();
+  
   // 先更新本地
   const localResult = updateLocalDiary(id, updates);
   
@@ -185,19 +261,50 @@ export const updateHybridDiary = async (id: string, updates: Partial<DiaryEntry>
 // 合并本地和云端数据
 const mergeEntries = (cloudEntries: DiaryEntry[], localEntries: DiaryEntry[]): DiaryEntry[] => {
   const entryMap = new Map<string, DiaryEntry>();
+  const signatureMap = new Map<string, DiaryEntry>();
+  
+  // 生成内容签名函数
+  const generateSignature = (entry: DiaryEntry): string => {
+    return `${entry.timestamp}_${entry.title}_${entry.content.substring(0, 50)}`;
+  };
   
   // 先加入本地数据
   localEntries.forEach(entry => {
+    const signature = generateSignature(entry);
     entryMap.set(entry.id, entry);
+    signatureMap.set(signature, entry);
   });
   
-  // 云端数据覆盖本地数据（云端优先）
+  // 云端数据处理：ID优先覆盖，内容签名去重
   cloudEntries.forEach(entry => {
-    entryMap.set(entry.id, entry);
+    const signature = generateSignature(entry);
+    
+    // 如果内容签名已存在，说明是重复内容
+    if (signatureMap.has(signature)) {
+      const existingEntry = signatureMap.get(signature)!;
+      
+      // 如果云端条目更新，则用云端版本替换
+      if (entry.timestamp >= existingEntry.timestamp) {
+        // 移除旧的本地条目
+        entryMap.delete(existingEntry.id);
+        // 添加云端条目
+        entryMap.set(entry.id, entry);
+        signatureMap.set(signature, entry);
+      }
+      // 否则保留本地版本，不添加云端重复项
+    } else {
+      // 新的云端条目
+      entryMap.set(entry.id, entry);
+      signatureMap.set(signature, entry);
+    }
   });
   
   // 按时间戳排序
-  return Array.from(entryMap.values()).sort((a, b) => b.timestamp - a.timestamp);
+  const result = Array.from(entryMap.values()).sort((a, b) => b.timestamp - a.timestamp);
+  
+  console.log(`🔄 数据合并: 云端 ${cloudEntries.length} 条, 本地 ${localEntries.length} 条, 去重后 ${result.length} 条`);
+  
+  return result;
 };
 
 // 手动同步到云端
@@ -310,9 +417,23 @@ export const reinitializeCloud = async (): Promise<boolean> => {
   }
 };
 
+// 重置存储状态（调试用）
+export const resetStorageState = (): void => {
+  localStorage.removeItem('hybrid_storage_initialized');
+  localStorage.removeItem('last_sync_timestamp');
+  clearCache();
+  
+  // 重置内存状态
+  storageStatus.lastSync = null;
+  storageStatus.syncing = false;
+  
+  console.log('🔄 存储状态已重置');
+};
+
 // 清理资源
 export const cleanupHybridStorage = (): void => {
   stopCloudListener();
+  clearCache();
   console.log('🧹 混合存储资源已清理');
 };
 

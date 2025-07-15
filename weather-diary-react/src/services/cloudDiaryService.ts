@@ -20,6 +20,7 @@ import {
 } from 'firebase/auth';
 import { db, auth, isFirebaseConfigured } from './firebaseConfig';
 import { DiaryEntry } from '../types';
+import { encryptDiaryEntry, decryptDiaryList } from './encryptionService';
 
 // 用户ID存储
 let currentUserId: string | null = null;
@@ -77,23 +78,28 @@ export const saveCloudDiary = async (entry: Omit<DiaryEntry, 'id' | 'timestamp'>
     }
 
     const userId = getUserId();
+    
+    // 🔒 加密日记内容
+    const encryptedEntry = await encryptDiaryEntry(entry, userId);
+    
     const diaryData = {
-      ...entry,
+      ...encryptedEntry,
       userId,
       timestamp: Date.now(),
       createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now()
+      updatedAt: Timestamp.now(),
+      encrypted: true // 标记为已加密
     };
 
     const docRef = await addDoc(collection(db, 'diaries'), diaryData);
     
     const savedEntry: DiaryEntry = {
-      ...entry,
+      ...entry, // 返回原始未加密数据给客户端使用
       id: docRef.id,
       timestamp: diaryData.timestamp
     };
 
-    console.log('日记已保存到云端:', docRef.id);
+    console.log('🔒 加密日记已保存到云端:', docRef.id);
     return savedEntry;
   } catch (error) {
     console.error('保存到云端失败:', error);
@@ -109,19 +115,20 @@ export const getCloudDiaries = async (): Promise<DiaryEntry[]> => {
     }
 
     const userId = getUserId();
+    
+    // 使用简单查询，避免索引问题
     const q = query(
       collection(db, 'diaries'),
       where('userId', '==', userId),
-      orderBy('timestamp', 'desc'),
       limit(100)
     );
 
     const querySnapshot = await getDocs(q);
-    const entries: DiaryEntry[] = [];
+    const encryptedEntries: DiaryEntry[] = [];
 
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      entries.push({
+      encryptedEntries.push({
         id: doc.id,
         title: data.title,
         content: data.content,
@@ -131,8 +138,14 @@ export const getCloudDiaries = async (): Promise<DiaryEntry[]> => {
       });
     });
 
-    console.log(`从云端获取到 ${entries.length} 条日记`);
-    return entries;
+    // 🔓 解密日记内容
+    const decryptedEntries = await decryptDiaryList(encryptedEntries, userId);
+    
+    // 在客户端排序
+    decryptedEntries.sort((a, b) => b.timestamp - a.timestamp);
+    
+    console.log(`🔓 从云端获取并解密了 ${decryptedEntries.length} 条日记`);
+    return decryptedEntries;
   } catch (error) {
     console.error('从云端获取日记失败:', error);
     throw error;
@@ -182,18 +195,19 @@ export const subscribeToCloudDiaries = (callback: (entries: DiaryEntry[]) => voi
     }
 
     const userId = getUserId();
+    
+    // 使用简单查询，避免索引问题
     const q = query(
       collection(db, 'diaries'),
       where('userId', '==', userId),
-      orderBy('timestamp', 'desc'),
       limit(100)
     );
 
-    return onSnapshot(q, (querySnapshot) => {
-      const entries: DiaryEntry[] = [];
+    return onSnapshot(q, async (querySnapshot) => {
+      const encryptedEntries: DiaryEntry[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        entries.push({
+        encryptedEntries.push({
           id: doc.id,
           title: data.title,
           content: data.content,
@@ -203,8 +217,19 @@ export const subscribeToCloudDiaries = (callback: (entries: DiaryEntry[]) => voi
         });
       });
       
-      console.log(`实时更新：获取到 ${entries.length} 条日记`);
-      callback(entries);
+      try {
+        // 🔓 解密日记内容
+        const decryptedEntries = await decryptDiaryList(encryptedEntries, userId);
+        
+        // 在客户端排序
+        decryptedEntries.sort((a, b) => b.timestamp - a.timestamp);
+        
+        console.log(`🔓 实时更新：解密了 ${decryptedEntries.length} 条日记`);
+        callback(decryptedEntries);
+      } catch (decryptError) {
+        console.error('实时解密失败:', decryptError);
+        callback([]); // 解密失败时返回空数组
+      }
     }, (error) => {
       console.error('实时监听失败:', error);
     });
@@ -224,16 +249,28 @@ export const syncLocalToCloud = async (): Promise<{ success: number; failed: num
     // 获取本地数据
     const localEntries = JSON.parse(localStorage.getItem('weather_diary_entries') || '[]');
     
+    if (localEntries.length === 0) {
+      console.log('📄 本地无数据需要同步');
+      return { success: 0, failed: 0 };
+    }
+    
     // 获取云端数据
     const cloudEntries = await getCloudDiaries();
-    const cloudIds = new Set(cloudEntries.map(entry => entry.id));
+    
+    // 使用时间戳和内容进行更精确的去重
+    const cloudSignatures = new Set(
+      cloudEntries.map(entry => `${entry.timestamp}_${entry.title}_${entry.content.substring(0, 50)}`)
+    );
 
     let success = 0;
     let failed = 0;
+    let skipped = 0;
 
     // 上传本地独有的数据
     for (const localEntry of localEntries) {
-      if (!cloudIds.has(localEntry.id)) {
+      const signature = `${localEntry.timestamp}_${localEntry.title}_${localEntry.content.substring(0, 50)}`;
+      
+      if (!cloudSignatures.has(signature)) {
         try {
           await saveCloudDiary({
             title: localEntry.title,
@@ -242,14 +279,17 @@ export const syncLocalToCloud = async (): Promise<{ success: number; failed: num
             weather: localEntry.weather
           });
           success++;
+          console.log(`📤 上传日记: ${localEntry.title}`);
         } catch (error) {
-          console.error('同步失败:', error);
+          console.error('同步失败:', localEntry.title, error);
           failed++;
         }
+      } else {
+        skipped++;
       }
     }
 
-    console.log(`同步完成: 成功 ${success} 条, 失败 ${failed} 条`);
+    console.log(`📊 同步结果: 成功 ${success} 条, 失败 ${failed} 条, 跳过 ${skipped} 条`);
     return { success, failed };
   } catch (error) {
     console.error('同步本地到云端失败:', error);
@@ -264,7 +304,9 @@ export const checkCloudConnection = async (): Promise<boolean> => {
       return false;
     }
 
-    await getDocs(query(collection(db, 'diaries'), limit(1)));
+    // 尝试初始化认证来测试连接
+    await initializeAuth();
+    console.log('✅ 云端连接检查成功');
     return true;
   } catch (error) {
     console.error('云端连接检查失败:', error);
