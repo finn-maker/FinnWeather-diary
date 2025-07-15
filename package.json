@@ -26,7 +26,7 @@
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },
-  "homepage": "https://finn-maker.github.io/skills-communicate-using-markdown/",
+  "homepage": "https://finn-maker.github.io/skills-communicate-using-markdown/weather-diary-react/",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
