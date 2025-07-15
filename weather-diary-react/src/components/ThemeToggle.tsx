@@ -11,6 +11,9 @@ const ThemeToggle: React.FC = () => {
   const [isNightMode, setIsNightMode] = useState(false);
   const theme = useTheme();
 
+  // 只在开发环境显示主题切换按钮
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
   useEffect(() => {
     // 检查URL参数
     const urlParams = new URLSearchParams(window.location.search);
@@ -34,6 +37,11 @@ const ThemeToggle: React.FC = () => {
     // 刷新页面以应用新主题
     window.location.reload();
   };
+
+  // 生产环境不显示主题切换按钮
+  if (!isDevelopment) {
+    return null;
+  }
 
   return (
     <Box 
