@@ -1,0 +1,429 @@
+/* 基础样式重置 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 根元素变量定义 */
+:root {
+    --primary-color: #4a90e2;
+    --secondary-color: #f5f7fa;
+    --text-color: #333;
+    --text-light: #666;
+    --border-color: #e0e0e0;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --border-radius: 12px;
+    --transition: all 0.3s ease;
+}
+
+/* 天气主题样式 */
+body.sunny {
+    --primary-color: #ff9500;
+    --secondary-color: #fff8e1;
+    --accent-color: #ffb74d;
+    background: linear-gradient(135deg, #ffd54f 0%, #ffcc02 100%);
+}
+
+body.cloudy {
+    --primary-color: #78909c;
+    --secondary-color: #f5f5f5;
+    --accent-color: #90a4ae;
+    background: linear-gradient(135deg, #cfd8dc 0%, #90a4ae 100%);
+}
+
+body.rainy {
+    --primary-color: #1976d2;
+    --secondary-color: #e3f2fd;
+    --accent-color: #42a5f5;
+    background: linear-gradient(135deg, #64b5f6 0%, #1976d2 100%);
+}
+
+body.snowy {
+    --primary-color: #37474f;
+    --secondary-color: #f8f9fa;
+    --accent-color: #78909c;
+    background: linear-gradient(135deg, #eceff1 0%, #cfd8dc 100%);
+}
+
+body.clear {
+    --primary-color: #6a1b9a;
+    --secondary-color: #f3e5f5;
+    --accent-color: #ab47bc;
+    background: linear-gradient(135deg, #ce93d8 0%, #9c27b0 100%);
+}
+
+body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: var(--text-color);
+    transition: var(--transition);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+}
+
+/* 天气头部 */
+.weather-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+
+.weather-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.weather-icon-container {
+    position: relative;
+}
+
+.weather-icon {
+    font-size: 3rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.weather-details {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.location {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.weather-desc {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.temperature {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.refresh-weather {
+    background: var(--primary-color);
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    color: white;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.refresh-weather:hover {
+    transform: rotate(180deg);
+    background: var(--accent-color);
+}
+
+/* 日记容器 */
+.diary-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: var(--border-radius);
+    padding: 30px;
+    box-shadow: var(--shadow);
+}
+
+.diary-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.diary-title {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.date-display {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    font-weight: 300;
+}
+
+/* 输入区域 */
+.diary-input-section {
+    margin-bottom: 40px;
+}
+
+.input-group {
+    margin-bottom: 25px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.input-group input,
+.input-group textarea {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-family: inherit;
+    transition: var(--transition);
+    resize: vertical;
+}
+
+.input-group input:focus,
+.input-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+#diary-content {
+    min-height: 150px;
+    line-height: 1.6;
+}
+
+/* 心情选择器 */
+.diary-meta {
+    margin-bottom: 25px;
+}
+
+.mood-selector label {
+    margin-bottom: 15px;
+}
+
+.mood-options {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mood-btn {
+    background: var(--secondary-color);
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mood-btn:hover,
+.mood-btn.selected {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    transform: scale(1.1);
+}
+
+/* 保存按钮 */
+.save-diary-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: var(--border-radius);
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    width: 100%;
+}
+
+.save-diary-btn:hover {
+    background: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 历史记录 */
+.diary-history h2 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.history-list {
+    display: grid;
+    gap: 20px;
+}
+
+.history-item {
+    background: var(--secondary-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    transition: var(--transition);
+}
+
+.history-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.history-title {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.history-date {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.history-weather {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 10px;
+}
+
+.history-content {
+    line-height: 1.6;
+    color: var(--text-color);
+    margin-bottom: 10px;
+}
+
+.history-mood {
+    text-align: right;
+    font-size: 1.2rem;
+}
+
+/* 天气装饰背景 */
+.weather-decoration {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+    overflow: hidden;
+}
+
+/* 天气粒子效果 */
+body.rainy .weather-decoration::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(30deg, transparent 40%, rgba(255,255,255,0.3) 41%, rgba(255,255,255,0.3) 42%, transparent 43%),
+        linear-gradient(30deg, transparent 40%, rgba(255,255,255,0.2) 41%, rgba(255,255,255,0.2) 42%, transparent 43%);
+    background-size: 20px 100px, 40px 200px;
+    animation: rain 1s linear infinite;
+}
+
+@keyframes rain {
+    0% { transform: translateY(-100px); }
+    100% { transform: translateY(100vh); }
+}
+
+body.snowy .weather-decoration::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle, rgba(255,255,255,0.8) 2px, transparent 2px),
+        radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px);
+    background-size: 50px 100px, 100px 200px;
+    animation: snow 10s linear infinite;
+}
+
+@keyframes snow {
+    0% { transform: translateY(-100px); }
+    100% { transform: translateY(100vh); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .weather-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .weather-info {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .diary-title {
+        font-size: 2rem;
+    }
+    
+    .mood-options {
+        justify-content: center;
+    }
+    
+    .mood-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .diary-container {
+        padding: 20px;
+    }
+    
+    .diary-title {
+        font-size: 1.8rem;
+    }
+    
+    .temperature {
+        font-size: 1.5rem;
+    }
+    
+    .weather-icon {
+        font-size: 2rem;
+    }
+}
