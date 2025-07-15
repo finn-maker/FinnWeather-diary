@@ -1,23 +1,23 @@
 {
   "files": {
     "main.css": "/skills-communicate-using-markdown/static/css/main.58c1b2fb.css",
-    "main.js": "/skills-communicate-using-markdown/static/js/main.a4edb964.js",
+    "main.js": "/skills-communicate-using-markdown/static/js/main.c14a85ea.js",
     "static/js/914.7693795b.chunk.js": "/skills-communicate-using-markdown/static/js/914.7693795b.chunk.js",
-    "static/js/834.62f5067f.chunk.js": "/skills-communicate-using-markdown/static/js/834.62f5067f.chunk.js",
+    "static/js/712.527338f7.chunk.js": "/skills-communicate-using-markdown/static/js/712.527338f7.chunk.js",
     "static/js/326.04d19639.chunk.js": "/skills-communicate-using-markdown/static/js/326.04d19639.chunk.js",
-    "static/js/676.aaf0cf9f.chunk.js": "/skills-communicate-using-markdown/static/js/676.aaf0cf9f.chunk.js",
-    "static/js/241.03c2c80d.chunk.js": "/skills-communicate-using-markdown/static/js/241.03c2c80d.chunk.js",
+    "static/js/241.22ba132c.chunk.js": "/skills-communicate-using-markdown/static/js/241.22ba132c.chunk.js",
+    "static/js/658.69eef3bf.chunk.js": "/skills-communicate-using-markdown/static/js/658.69eef3bf.chunk.js",
     "index.html": "/skills-communicate-using-markdown/index.html",
     "main.58c1b2fb.css.map": "/skills-communicate-using-markdown/static/css/main.58c1b2fb.css.map",
-    "main.a4edb964.js.map": "/skills-communicate-using-markdown/static/js/main.a4edb964.js.map",
+    "main.c14a85ea.js.map": "/skills-communicate-using-markdown/static/js/main.c14a85ea.js.map",
     "914.7693795b.chunk.js.map": "/skills-communicate-using-markdown/static/js/914.7693795b.chunk.js.map",
-    "834.62f5067f.chunk.js.map": "/skills-communicate-using-markdown/static/js/834.62f5067f.chunk.js.map",
+    "712.527338f7.chunk.js.map": "/skills-communicate-using-markdown/static/js/712.527338f7.chunk.js.map",
     "326.04d19639.chunk.js.map": "/skills-communicate-using-markdown/static/js/326.04d19639.chunk.js.map",
-    "676.aaf0cf9f.chunk.js.map": "/skills-communicate-using-markdown/static/js/676.aaf0cf9f.chunk.js.map",
-    "241.03c2c80d.chunk.js.map": "/skills-communicate-using-markdown/static/js/241.03c2c80d.chunk.js.map"
+    "241.22ba132c.chunk.js.map": "/skills-communicate-using-markdown/static/js/241.22ba132c.chunk.js.map",
+    "658.69eef3bf.chunk.js.map": "/skills-communicate-using-markdown/static/js/658.69eef3bf.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.58c1b2fb.css",
-    "static/js/main.a4edb964.js"
+    "static/js/main.c14a85ea.js"
   ]
 }

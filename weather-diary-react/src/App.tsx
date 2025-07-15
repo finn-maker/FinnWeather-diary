@@ -198,7 +198,10 @@ const App: React.FC = () => {
                   ))}
                 </Box>
               }>
-                <DiaryHistory entries={diaryEntries} />
+                <DiaryHistory entries={diaryEntries} onUpdate={() => {
+                  const entries = getDiaryEntries();
+                  setDiaryEntries(entries);
+                }} />
               </Suspense>
             </Paper>
           </motion.div>
