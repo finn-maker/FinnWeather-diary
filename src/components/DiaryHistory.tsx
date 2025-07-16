@@ -28,7 +28,7 @@ import {
 import { DiaryEntry } from '../types';
 import { downloadBackup, importDiaryData, formatDate } from '../services/diaryService';
 import { deleteHybridDiary } from '../services/hybridDiaryService';
-import { convertWeatherToEmoji } from '../services/weatherService';
+import { createWeatherDisplay } from '../services/weatherService';
 
 interface DiaryHistoryProps {
   entries: DiaryEntry[];
@@ -308,20 +308,29 @@ const DiaryHistory: React.FC<DiaryHistoryProps> = ({ entries, onUpdate }) => {
                     
                     {/* 第三行：天气描述 */}
                     <Box>
-                      <Chip
-                        label={`${entry.weather.icon} ${convertWeatherToEmoji(entry.weather.description)}`}
-                        size="small"
-                        variant="outlined"
-                        data-weather-info="description"
-                        sx={{
-                          fontSize: { xs: '1rem', sm: '1.2rem' },
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography sx={{ 
+                          fontSize: '1.5rem',
+                          lineHeight: 1
+                        }}>
+                          {entry.weather.icon}
+                        </Typography>
+                        <Typography sx={{ 
+                          fontSize: '1.2rem',
+                          lineHeight: 1
+                        }}>
+                          {createWeatherDisplay(entry.weather.description).emoji}
+                        </Typography>
+                        <Typography sx={{
+                          fontSize: { xs: '0.85rem', sm: '0.9rem' },
                           fontFamily: '"Noto Sans SC", sans-serif',
-                          fontWeight: 500,
-                          '& .MuiChip-label': {
-                            fontFamily: '"Noto Sans SC", sans-serif'
-                          }
-                        }}
-                      />
+                          fontWeight: 400,
+                          color: 'text.secondary',
+                          opacity: 0.8
+                        }}>
+                          {createWeatherDisplay(entry.weather.description).text}
+                        </Typography>
+                      </Box>
                     </Box>
                   </Box>
 

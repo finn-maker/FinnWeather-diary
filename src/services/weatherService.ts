@@ -99,6 +99,20 @@ const convertWeatherToEmoji = (description: string): string => {
 // 导出天气表情符号转换函数
 export { convertWeatherToEmoji };
 
+// 创建天气显示组合（表情符号 + 文字描述）
+export const createWeatherDisplay = (description: string) => {
+  const emoji = convertWeatherToEmoji(description);
+  
+  // 移除夜晚前缀显示原始描述
+  const cleanDescription = description.replace(/^夜晚\s*-\s*/, '');
+  
+  return {
+    emoji,
+    text: cleanDescription,
+    isNight: description.startsWith('夜晚')
+  };
+};
+
 // 天气API配置（从配置文件导入）
 const WEATHER_APIS = {
   qweather: API_CONFIG.qweather,
@@ -379,9 +393,13 @@ const fetchAmapWeatherData = async (lat: number, lon: number): Promise<WeatherDa
       throw new Error('无法获取城市编码');
     }
 
+    // 智能获取地名信息，特别处理直辖市
+    const addressComponent = geoData.regeocode.addressComponent;
     const locationName = formatLocationName(
-      geoData.regeocode.addressComponent.city || geoData.regeocode.addressComponent.district,
-      geoData.regeocode.addressComponent.province
+      addressComponent.province,    // 省级（对直辖市就是直辖市名）
+      addressComponent.city,        // 市级
+      addressComponent.district,    // 区级
+      addressComponent.township     // 乡镇级（可选）
     );
 
     // 获取天气信息 - 添加extensions参数获取实时天气
@@ -884,7 +902,7 @@ const cleanTranslationResult = (translated: string): string => {
     .substring(0, 50); // 限制长度
 };
 
-// 🚀 新增：格式化地名，避免显示逗号开头的问题
+// 🚀 优化：智能格式化地名，特别处理直辖市精确到区
 const formatLocationName = (...parts: string[]): string => {
   // 过滤掉空值、undefined、null和只有空格的字符串
   const validParts = parts
@@ -901,7 +919,31 @@ const formatLocationName = (...parts: string[]): string => {
     return validParts[0];
   }
   
-  // 多个部分用逗号加空格连接
+  // 中国直辖市列表
+  const municipalities = ['北京市', '上海市', '天津市', '重庆市', '北京', '上海', '天津', '重庆'];
+  
+  // 检查是否为直辖市，如果是，优先显示区级信息
+  for (let i = 0; i < validParts.length; i++) {
+    const part = validParts[i];
+    
+    // 如果当前部分是直辖市
+    if (municipalities.some(city => part.includes(city) || city.includes(part))) {
+      // 查找区级信息（通常在后面的部分）
+      const districtParts = validParts.slice(i + 1).filter(p => 
+        p.includes('区') || p.includes('县') || p.includes('市') || p.includes('镇')
+      );
+      
+      if (districtParts.length > 0) {
+        // 返回：直辖市 + 区/县
+        return `${part}${districtParts[0]}`;
+      } else {
+        // 如果没有区级信息，返回直辖市名
+        return part;
+      }
+    }
+  }
+  
+  // 非直辖市的常规处理
   return validParts.join(', ');
 };
 
