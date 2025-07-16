@@ -164,6 +164,11 @@ export const saveHybridDiary = async (entry: Omit<DiaryEntry, 'id' | 'timestamp'
     try {
       const cloudEntry = await saveCloudDiary(entry);
       console.log('✅ 日记已保存到云端（混合模式）');
+      
+      // 更新最后同步时间
+      storageStatus.lastSync = Date.now();
+      localStorage.setItem('last_sync_timestamp', storageStatus.lastSync.toString());
+      
       return cloudEntry;
     } catch (error) {
       console.warn('⚠️ 云端保存失败，降级到本地保存:', error);
@@ -171,6 +176,10 @@ export const saveHybridDiary = async (entry: Omit<DiaryEntry, 'id' | 'timestamp'
       storageStatus.cloudAvailable = false;
       const localEntry = saveLocalDiary(entry);
       console.log('✅ 日记已保存到本地（降级模式）');
+      
+      // 尝试重新连接并同步
+      tryAutoReconnectAndSync();
+      
       return localEntry;
     }
   }
@@ -178,7 +187,54 @@ export const saveHybridDiary = async (entry: Omit<DiaryEntry, 'id' | 'timestamp'
   // 纯本地模式
   const localEntry = saveLocalDiary(entry);
   console.log('✅ 日记已保存到本地');
+  
+  // 如果Firebase已配置但云端不可用，尝试自动同步
+  if (isFirebaseConfigured() && !storageStatus.cloudAvailable) {
+    tryAutoReconnectAndSync();
+  }
+  
   return localEntry;
+};
+
+// 自动重连和同步（后台执行）
+const tryAutoReconnectAndSync = (): void => {
+  // 避免重复执行
+  if (storageStatus.syncing) {
+    console.log('⚠️ 同步正在进行中，跳过自动同步');
+    return;
+  }
+
+  // 延迟执行，避免阻塞UI
+  setTimeout(async () => {
+    try {
+      console.log('🔄 尝试自动重连云端...');
+      const reconnected = await reinitializeCloud();
+      
+      if (reconnected && storageStatus.cloudAvailable) {
+        console.log('✅ 云端重连成功，开始自动同步...');
+        
+        // 检查是否有本地数据需要同步
+        const localEntries = getLocalDiaries();
+        if (localEntries.length > 0) {
+          storageStatus.syncing = true;
+          try {
+            const result = await syncLocalToCloud();
+            storageStatus.lastSync = Date.now();
+            localStorage.setItem('last_sync_timestamp', storageStatus.lastSync.toString());
+            console.log(`🚀 自动同步完成: 成功 ${result.success} 条, 失败 ${result.failed} 条`);
+          } catch (syncError) {
+            console.error('自动同步失败:', syncError);
+          } finally {
+            storageStatus.syncing = false;
+          }
+        }
+      } else {
+        console.log('❌ 云端重连失败，将在下次保存时重试');
+      }
+    } catch (error) {
+      console.error('自动重连过程中出错:', error);
+    }
+  }, 2000); // 延迟2秒执行
 };
 
 // 获取日记列表 (混合模式)

@@ -127,40 +127,98 @@ const locationTranslations: { [key: string]: string } = {
 const translationCache: { [key: string]: { result: string; timestamp: number } } = {};
 const TRANSLATION_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24小时缓存
 
-// 使用百度翻译API自动翻译地名
+// 翻译服务配置
+const TRANSLATION_SERVICES = [
+  {
+    name: 'MyMemory',
+    url: (text: string) => `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|zh`,
+    parser: (data: any) => data.responseStatus === 200 && data.responseData?.translatedText ? data.responseData.translatedText : null
+  },
+  {
+    name: 'LibreTranslate',
+    url: (text: string) => `https://libretranslate.de/translate`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: (text: string) => JSON.stringify({
+      q: text,
+      source: 'en',
+      target: 'zh',
+      format: 'text'
+    }),
+    parser: (data: any) => data.translatedText || null
+  },
+  {
+    name: 'Google Translate (Free)',
+    url: (text: string) => `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh&dt=t&q=${encodeURIComponent(text)}`,
+    parser: (data: any) => {
+      if (Array.isArray(data) && data[0] && Array.isArray(data[0]) && data[0][0] && data[0][0][0]) {
+        return data[0][0][0];
+      }
+      return null;
+    }
+  }
+];
+
+// 使用多个翻译服务API自动翻译地名
 const translateLocationName = async (locationName: string): Promise<string> => {
   // 先检查本地缓存
   if (locationTranslations[locationName]) {
+    console.log(`📍 使用本地翻译: ${locationName} -> ${locationTranslations[locationName]}`);
     return locationTranslations[locationName];
   }
   
   // 检查运行时缓存
   const cached = translationCache[locationName];
   if (cached && (Date.now() - cached.timestamp) < TRANSLATION_CACHE_DURATION) {
+    console.log(`🔄 使用缓存翻译: ${locationName} -> ${cached.result}`);
     return cached.result;
   }
   
-  try {
-    // 使用免费的翻译服务 - MyMemory Translation API
-    const response = await fetch(
-      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(locationName)}&langpair=en|zh`
-    );
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data.responseStatus === 200 && data.responseData?.translatedText) {
-        const translated = data.responseData.translatedText;
-        // 缓存翻译结果
-        translationCache[locationName] = { result: translated, timestamp: Date.now() };
-        return translated;
+  // 尝试使用多个翻译服务
+  for (const service of TRANSLATION_SERVICES) {
+    try {
+      console.log(`🌐 尝试使用 ${service.name} 翻译: ${locationName}`);
+      
+      const requestOptions: RequestInit = {
+        method: service.method || 'GET',
+        ...(service.headers && { headers: service.headers }),
+        ...(service.body && { body: service.body(locationName) })
+      };
+      
+      const response = await fetch(service.url(locationName), requestOptions);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const translated = service.parser(data);
+        
+        if (translated && translated !== locationName) {
+          // 清理翻译结果
+          const cleanTranslated = cleanTranslationResult(translated);
+          console.log(`✅ ${service.name} 翻译成功: ${locationName} -> ${cleanTranslated}`);
+          
+          // 缓存翻译结果
+          translationCache[locationName] = { result: cleanTranslated, timestamp: Date.now() };
+          return cleanTranslated;
+        }
       }
+    } catch (error) {
+      console.warn(`❌ ${service.name} 翻译失败:`, error);
+      continue;
     }
-  } catch (error) {
-    console.warn('地名翻译API调用失败:', error);
   }
   
-  // 如果翻译失败，尝试使用简单的规则处理
+  console.log(`⚠️ 所有翻译服务失败，使用备用处理: ${locationName}`);
+  // 如果所有翻译服务都失败，使用备用处理
   return processLocationNameFallback(locationName);
+};
+
+// 清理翻译结果
+const cleanTranslationResult = (translated: string): string => {
+  return translated
+    .trim()
+    .replace(/^["']|["']$/g, '') // 移除首尾引号
+    .replace(/\s+/g, ' ') // 规范化空格
+    .substring(0, 50); // 限制长度
 };
 
 // 备用地名处理逻辑
@@ -170,10 +228,58 @@ const processLocationNameFallback = (locationName: string): string => {
     .replace(/ County$/, '县')
     .replace(/ City$/, '市')
     .replace(/ State$/, '州')
-    .replace(/ Province$/, '省');
+    .replace(/ Province$/, '省')
+    .replace(/ District$/, '区')
+    .replace(/ Region$/, '地区');
     
   // 如果处理后还是英文，保持原样
   return cleanName;
+};
+
+// 自动翻译天气描述
+const translateWeatherDescription = async (description: string): Promise<string> => {
+  // 先检查本地翻译表
+  if (weatherTranslations[description]) {
+    return weatherTranslations[description];
+  }
+  
+  // 检查缓存
+  const cached = translationCache[`weather_${description}`];
+  if (cached && (Date.now() - cached.timestamp) < TRANSLATION_CACHE_DURATION) {
+    return cached.result;
+  }
+  
+  // 尝试API翻译
+  for (const service of TRANSLATION_SERVICES) {
+    try {
+      const requestOptions: RequestInit = {
+        method: service.method || 'GET',
+        ...(service.headers && { headers: service.headers }),
+        ...(service.body && { body: service.body(description) })
+      };
+      
+      const response = await fetch(service.url(description), requestOptions);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const translated = service.parser(data);
+        
+        if (translated && translated !== description) {
+          const cleanTranslated = cleanTranslationResult(translated);
+          
+          // 缓存翻译结果
+          translationCache[`weather_${description}`] = { result: cleanTranslated, timestamp: Date.now() };
+          return cleanTranslated;
+        }
+      }
+    } catch (error) {
+      console.warn(`天气描述翻译失败 (${service.name}):`, error);
+      continue;
+    }
+  }
+  
+  // 如果翻译失败，返回原文
+  return description;
 };
 
 // 解析天气数据
@@ -214,7 +320,7 @@ const parseWeatherData = async (data: any): Promise<WeatherData> => {
     const translatedCountry = await translateLocationName(countryName);
     
     // 翻译天气描述
-    const translatedWeatherDesc = weatherTranslations[weatherDesc] || weatherDesc;
+    const translatedWeatherDesc = await translateWeatherDescription(weatherDesc);
 
     return {
       location: `${translatedArea}, ${translatedCountry}`,
@@ -231,7 +337,7 @@ const parseWeatherData = async (data: any): Promise<WeatherData> => {
     // 翻译失败时使用原有逻辑
     const translatedArea = locationTranslations[areaName] || areaName;
     const translatedCountry = locationTranslations[countryName] || countryName;
-    const translatedWeatherDesc = weatherTranslations[weatherDesc] || weatherDesc;
+    const translatedWeatherDesc = await translateWeatherDescription(weatherDesc);
 
     return {
       location: `${translatedArea}, ${translatedCountry}`,

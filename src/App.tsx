@@ -14,6 +14,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Refresh, Menu } from '@mui/icons-material';
 import WeatherHeader from './components/WeatherHeader';
+import PrivacyStatus from './components/PrivacyStatus';
 import { WeatherData, DiaryEntry } from './types';
 import { getWeatherData } from './services/weatherService';
 import { saveHybridDiary, getHybridDiaries, initializeHybridStorage } from './services/hybridDiaryService';
@@ -26,7 +27,6 @@ import './styles/chipColors.css';
 const DiaryForm = lazy(() => import('./components/DiaryForm'));
 const DiaryHistory = lazy(() => import('./components/DiaryHistory'));
 const ThemeToggle = lazy(() => import('./components/ThemeToggle'));
-const CloudStorageManager = lazy(() => import('./components/CloudStorageManager'));
 
 const App: React.FC = () => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -118,9 +118,12 @@ const App: React.FC = () => {
           >
             天气日记本
           </Typography>
+          
           <IconButton 
             onClick={handleRefreshWeather}
-            sx={{ color: getWeatherTheme() === 'night' ? '#64b5f6' : 'primary.main' }}
+            sx={{ 
+              color: getWeatherTheme() === 'night' ? '#64b5f6' : 'primary.main'
+            }}
           >
             <Refresh />
           </IconButton>
@@ -219,44 +222,6 @@ const App: React.FC = () => {
             </Paper>
           </motion.div>
         </Box>
-
-        {/* 云端存储管理器 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-        >
-          <Box sx={{ mt: 3 }}>
-            <Paper 
-              elevation={3}
-              sx={{ 
-                p: 3, 
-                background: getWeatherTheme() === 'night' ? 'rgba(52, 73, 94, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(10px)',
-                borderRadius: 3
-              }}
-            >
-              <Suspense fallback={
-                <Box>
-                  <Skeleton variant="text" width="40%" height={32} sx={{ mb: 2 }} />
-                  <Skeleton variant="rectangular" width="100%" height={80} />
-                </Box>
-              }>
-                <CloudStorageManager 
-                  onStorageChange={async () => {
-                    // 数据同步后刷新日记列表
-                    try {
-                      const entries = await getHybridDiaries();
-                      setDiaryEntries(entries);
-                    } catch (error) {
-                      console.error('刷新日记列表失败:', error);
-                    }
-                  }} 
-                />
-              </Suspense>
-            </Paper>
-          </Box>
-        </motion.div>
       </Container>
       
       {/* 夜晚主题的月亮装饰 */}
@@ -268,6 +233,9 @@ const App: React.FC = () => {
       <Suspense fallback={null}>
         <ThemeToggle />
       </Suspense>
+      
+      {/* 隐私保障状态 */}
+      <PrivacyStatus />
     </Box>
   );
 };
