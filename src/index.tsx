@@ -8,7 +8,7 @@ import App from './App';
 // Service Worker 注册 (仅在生产环境)
 if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register('/FinnWeather-diary/sw.js')
       .then((registration) => {
         console.log('✅ SW 注册成功:', registration.scope);
         
