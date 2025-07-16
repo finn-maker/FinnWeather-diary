@@ -34,6 +34,10 @@
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
+    "preview": "serve -s build -l 3000",
+    "local-deploy": "node local-deploy.js",
+    "quick-deploy": "npm run build && npm run deploy",
+    "dev-preview": "npm run build && npm run preview",
     "setup-firebase": "node setup-firebase.js",
     "config": "node setup-firebase.js"
   },

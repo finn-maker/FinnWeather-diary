@@ -140,7 +140,7 @@ const fetchQWeatherData = async (lat: number, lon: number): Promise<WeatherData>
       const geoData = await geoResponse.json();
       if (geoData.code === '200' && geoData.location && geoData.location.length > 0) {
         const location = geoData.location[0];
-        locationName = `${location.name}, ${location.adm1}, ${location.country}`;
+        locationName = formatLocationName(location.name, location.adm1, location.country);
       }
     }
 
@@ -282,7 +282,10 @@ const fetchAmapWeatherData = async (lat: number, lon: number): Promise<WeatherDa
       throw new Error('无法获取城市编码');
     }
 
-    const locationName = `${geoData.regeocode.addressComponent.city || geoData.regeocode.addressComponent.district}, ${geoData.regeocode.addressComponent.province}`;
+    const locationName = formatLocationName(
+      geoData.regeocode.addressComponent.city || geoData.regeocode.addressComponent.district,
+      geoData.regeocode.addressComponent.province
+    );
 
     // 获取天气信息 - 添加extensions参数获取实时天气
     const weatherUrl = `${WEATHER_APIS.amap.baseUrl}/weather/weatherInfo?city=${cityCode}&key=${WEATHER_APIS.amap.key}&extensions=base&output=json`;
@@ -784,6 +787,27 @@ const cleanTranslationResult = (translated: string): string => {
     .substring(0, 50); // 限制长度
 };
 
+// 🚀 新增：格式化地名，避免显示逗号开头的问题
+const formatLocationName = (...parts: string[]): string => {
+  // 过滤掉空值、undefined、null和只有空格的字符串
+  const validParts = parts
+    .filter(part => part && typeof part === 'string' && part.trim() !== '')
+    .map(part => part.trim());
+  
+  // 如果没有有效部分，返回默认值
+  if (validParts.length === 0) {
+    return '未知位置';
+  }
+  
+  // 如果只有一个部分，直接返回
+  if (validParts.length === 1) {
+    return validParts[0];
+  }
+  
+  // 多个部分用逗号加空格连接
+  return validParts.join(', ');
+};
+
 // 备用地名处理逻辑
 const processLocationNameFallback = (locationName: string): string => {
   // 移除常见的英文后缀
@@ -900,7 +924,7 @@ const parseWeatherData = async (data: any): Promise<WeatherData> => {
     const translatedWeatherDesc = await translateWeatherDescription(weatherDesc);
 
     return {
-      location: `${translatedArea}, ${translatedCountry}`,
+      location: formatLocationName(translatedArea, translatedCountry),
       description: isNight ? `夜晚 - ${translatedWeatherDesc}` : translatedWeatherDesc,
       temperature: current.temp_C,
       condition: weatherInfo.condition as WeatherData['condition'],
@@ -917,7 +941,7 @@ const parseWeatherData = async (data: any): Promise<WeatherData> => {
     const translatedWeatherDesc = await translateWeatherDescription(weatherDesc);
 
     return {
-      location: `${translatedArea}, ${translatedCountry}`,
+      location: formatLocationName(translatedArea, translatedCountry),
       description: isNight ? `夜晚 - ${translatedWeatherDesc}` : translatedWeatherDesc,
       temperature: current.temp_C,
       condition: weatherInfo.condition as WeatherData['condition'],
