@@ -251,7 +251,24 @@ const fetchQWeatherData = async (lat: number, lon: number): Promise<WeatherData>
       const geoData = await geoResponse.json();
       if (geoData.code === '200' && geoData.location && geoData.location.length > 0) {
         const location = geoData.location[0];
-        locationName = formatLocationName(location.name, location.adm1, location.country);
+        
+        // 和风天气API地名处理
+        if (location.country === '中国' || location.country === 'China') {
+          // 中国地区：优先使用adm1（省级）+ name（市/区级）
+          const adm1 = location.adm1 || '';
+          const name = location.name || '';
+          
+          // 直辖市判断
+          const municipalities = ['北京市', '上海市', '天津市', '重庆市'];
+          if (municipalities.includes(adm1)) {
+            locationName = name ? `${adm1}${name}` : adm1;
+          } else {
+            locationName = formatLocationName(name, adm1);
+          }
+        } else {
+          // 国外地区：使用原逻辑
+          locationName = formatLocationName(location.name, location.adm1, location.country);
+        }
       }
     }
 
@@ -395,12 +412,23 @@ const fetchAmapWeatherData = async (lat: number, lon: number): Promise<WeatherDa
 
     // 智能获取地名信息，特别处理直辖市
     const addressComponent = geoData.regeocode.addressComponent;
-    const locationName = formatLocationName(
-      addressComponent.province,    // 省级（对直辖市就是直辖市名）
-      addressComponent.city,        // 市级
-      addressComponent.district,    // 区级
-      addressComponent.township     // 乡镇级（可选）
-    );
+    
+    // 直辖市判断和处理
+    const municipalities = ['北京市', '上海市', '天津市', '重庆市'];
+    const province = addressComponent.province || '';
+    
+    let locationName;
+    if (municipalities.includes(province)) {
+      // 直辖市：显示省市+区
+      const district = addressComponent.district || '';
+      locationName = district ? `${province}${district}` : province;
+    } else {
+      // 非直辖市：使用原逻辑
+      locationName = formatLocationName(
+        addressComponent.city || addressComponent.district,
+        addressComponent.province
+      );
+    }
 
     // 获取天气信息 - 添加extensions参数获取实时天气
     const weatherUrl = `${WEATHER_APIS.amap.baseUrl}/weather/weatherInfo?city=${cityCode}&key=${WEATHER_APIS.amap.key}&extensions=base&output=json`;
@@ -1062,8 +1090,18 @@ const parseWeatherData = async (data: any): Promise<WeatherData> => {
     // 翻译天气描述
     const translatedWeatherDesc = await translateWeatherDescription(weatherDesc);
 
+    // wttr.in API地名处理：优先使用城市名，避免逗号问题
+    let locationName;
+    if (translatedCountry === '中国' || countryName === 'China') {
+      // 中国地区：优先显示城市名
+      locationName = translatedArea || '未知位置';
+    } else {
+      // 国外地区：显示城市, 国家
+      locationName = formatLocationName(translatedArea, translatedCountry);
+    }
+
     return {
-      location: formatLocationName(translatedArea, translatedCountry),
+      location: locationName,
       description: isNight ? `夜晚 - ${translatedWeatherDesc}` : translatedWeatherDesc,
       temperature: current.temp_C,
       condition: weatherInfo.condition as WeatherData['condition'],
@@ -1079,8 +1117,16 @@ const parseWeatherData = async (data: any): Promise<WeatherData> => {
     const translatedCountry = locationTranslations[countryName] || countryName;
     const translatedWeatherDesc = await translateWeatherDescription(weatherDesc);
 
+    // 备用方案也要处理中国地区
+    let locationName;
+    if (translatedCountry === '中国' || countryName === 'China') {
+      locationName = translatedArea || '未知位置';
+    } else {
+      locationName = formatLocationName(translatedArea, translatedCountry);
+    }
+
     return {
-      location: formatLocationName(translatedArea, translatedCountry),
+      location: locationName,
       description: isNight ? `夜晚 - ${translatedWeatherDesc}` : translatedWeatherDesc,
       temperature: current.temp_C,
       condition: weatherInfo.condition as WeatherData['condition'],

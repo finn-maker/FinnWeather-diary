@@ -315,12 +315,6 @@ const DiaryHistory: React.FC<DiaryHistoryProps> = ({ entries, onUpdate }) => {
                         }}>
                           {entry.weather.icon}
                         </Typography>
-                        <Typography sx={{ 
-                          fontSize: '1.2rem',
-                          lineHeight: 1
-                        }}>
-                          {createWeatherDisplay(entry.weather.description).emoji}
-                        </Typography>
                         <Typography sx={{
                           fontSize: { xs: '0.85rem', sm: '0.9rem' },
                           fontFamily: '"Noto Sans SC", sans-serif',

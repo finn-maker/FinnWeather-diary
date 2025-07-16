@@ -87,23 +87,15 @@ const WeatherHeader: React.FC<WeatherHeaderProps> = ({ weather, onRefresh }) => 
                   </Typography>
                 </Box>
                 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Typography variant="body1" sx={{ 
-                    fontSize: '1.8rem',
-                    lineHeight: 1
-                  }}>
-                    {createWeatherDisplay(weather.description).emoji}
-                  </Typography>
-                  <Typography variant="body1" sx={{ 
-                    color: getWeatherTheme() === 'night' ? '#b0b0b0' : 'text.secondary',
-                    fontSize: '1rem',
-                    fontWeight: 400,
-                    fontFamily: '"Noto Sans SC", sans-serif',
-                    opacity: 0.9
-                  }}>
-                    {createWeatherDisplay(weather.description).text}
-                  </Typography>
-                </Box>
+                <Typography variant="body1" sx={{ 
+                  color: getWeatherTheme() === 'night' ? '#b0b0b0' : 'text.secondary',
+                  fontSize: '1rem',
+                  fontWeight: 400,
+                  fontFamily: '"Noto Sans SC", sans-serif',
+                  opacity: 0.9
+                }} mb={1}>
+                  {createWeatherDisplay(weather.description).text}
+                </Typography>
 
                 {/* 温度显示 */}
                 <Box display="flex" alignItems="center" gap={0.5} mb={2}>
