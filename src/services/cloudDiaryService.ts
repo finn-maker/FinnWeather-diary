@@ -257,10 +257,21 @@ export const syncLocalToCloud = async (): Promise<{ success: number; failed: num
     // 获取云端数据
     const cloudEntries = await getCloudDiaries();
     
-    // 使用时间戳和内容进行更精确的去重
-    const cloudSignatures = new Set(
-      cloudEntries.map(entry => `${entry.timestamp}_${entry.title}_${entry.content.substring(0, 50)}`)
-    );
+    // 使用多重条件进行更精确的去重
+    const cloudSignatures = new Set();
+    const cloudTitleTime = new Set();
+    
+    cloudEntries.forEach(entry => {
+      // 方法1：内容签名去重
+      const contentSignature = `${entry.timestamp}_${entry.title}_${entry.content.substring(0, 50)}`;
+      cloudSignatures.add(contentSignature);
+      
+      // 方法2：标题+时间去重（精确到分钟）
+      const entryDate = new Date(entry.timestamp);
+      const timeToMinute = new Date(entryDate.getFullYear(), entryDate.getMonth(), entryDate.getDate(), entryDate.getHours(), entryDate.getMinutes()).getTime();
+      const titleTimeSignature = `${entry.title}_${timeToMinute}`;
+      cloudTitleTime.add(titleTimeSignature);
+    });
 
     let success = 0;
     let failed = 0;
@@ -268,24 +279,31 @@ export const syncLocalToCloud = async (): Promise<{ success: number; failed: num
 
     // 上传本地独有的数据
     for (const localEntry of localEntries) {
-      const signature = `${localEntry.timestamp}_${localEntry.title}_${localEntry.content.substring(0, 50)}`;
+      // 多重检查避免重复
+      const contentSignature = `${localEntry.timestamp}_${localEntry.title}_${localEntry.content.substring(0, 50)}`;
       
-      if (!cloudSignatures.has(signature)) {
-        try {
-          await saveCloudDiary({
-            title: localEntry.title,
-            content: localEntry.content,
-            mood: localEntry.mood,
-            weather: localEntry.weather
-          });
-          success++;
-          console.log(`📤 上传日记: ${localEntry.title}`);
-        } catch (error) {
-          console.error('同步失败:', localEntry.title, error);
-          failed++;
-        }
-      } else {
+      const entryDate = new Date(localEntry.timestamp);
+      const timeToMinute = new Date(entryDate.getFullYear(), entryDate.getMonth(), entryDate.getDate(), entryDate.getHours(), entryDate.getMinutes()).getTime();
+      const titleTimeSignature = `${localEntry.title}_${timeToMinute}`;
+      
+      // 如果任一签名匹配，则跳过上传
+      if (cloudSignatures.has(contentSignature) || cloudTitleTime.has(titleTimeSignature)) {
         skipped++;
+        continue;
+      }
+      
+      try {
+        await saveCloudDiary({
+          title: localEntry.title,
+          content: localEntry.content,
+          mood: localEntry.mood,
+          weather: localEntry.weather
+        });
+        success++;
+        console.log(`📤 上传日记: ${localEntry.title}`);
+      } catch (error) {
+        console.error('同步失败:', localEntry.title, error);
+        failed++;
       }
     }
 

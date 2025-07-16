@@ -73,10 +73,27 @@ export const initializeHybridStorage = async (): Promise<StorageStatus> => {
       
       // 检查是否需要初始同步（仅在首次使用时）
       if (shouldPerformInitialSync()) {
-        console.log('🔄 检测到首次使用云端存储，开始同步本地数据...');
-        await performInitialSync();
-        // 标记已完成初始同步
-        localStorage.setItem('hybrid_storage_initialized', 'true');
+        console.log('🔄 检测到需要初始同步，检查云端数据...');
+        
+        // 先检查云端是否已有数据
+        try {
+          const cloudEntries = await getCloudDiaries();
+          if (cloudEntries.length > 0) {
+            console.log(`☁️ 云端已有 ${cloudEntries.length} 条数据，跳过上传同步`);
+            // 标记已完成初始同步，但不执行上传
+            localStorage.setItem('hybrid_storage_initialized', 'true');
+            localStorage.setItem('last_sync_timestamp', Date.now().toString());
+          } else {
+            console.log('📤 云端无数据，开始同步本地数据...');
+            await performInitialSync();
+            // 标记已完成初始同步
+            localStorage.setItem('hybrid_storage_initialized', 'true');
+          }
+        } catch (cloudError) {
+          console.warn('检查云端数据失败，尝试同步:', cloudError);
+          await performInitialSync();
+          localStorage.setItem('hybrid_storage_initialized', 'true');
+        }
       } else {
         console.log('✅ 云端存储已初始化，跳过初始同步');
       }
@@ -96,40 +113,58 @@ export const initializeHybridStorage = async (): Promise<StorageStatus> => {
 
 // 检查是否需要执行初始同步
 const shouldPerformInitialSync = (): boolean => {
-  // 如果从未初始化过云端存储，需要同步
-  const hasInitialized = localStorage.getItem('hybrid_storage_initialized');
-  if (!hasInitialized) {
-    console.log('🔍 检查同步需求: 从未初始化，需要同步');
-    return true;
+  // 首先检查是否有同步时间戳记录 - 最可靠的标记
+  const lastSyncTimestamp = localStorage.getItem('last_sync_timestamp');
+  if (lastSyncTimestamp) {
+    const lastSyncTime = parseInt(lastSyncTimestamp);
+    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000); // 24小时前
+    
+    // 如果最近24小时内同步过，不需要再次同步
+    if (lastSyncTime > oneDayAgo) {
+      console.log('🔍 检查同步需求: 最近已同步过，无需重复同步');
+      return false;
+    }
   }
   
   // 检查是否有本地数据需要上传
   const localEntries = getLocalDiaries();
-  const lastSyncTimestamp = localStorage.getItem('last_sync_timestamp');
-  
   if (localEntries.length === 0) {
     console.log('🔍 检查同步需求: 本地无数据，无需同步');
     return false;
   }
   
-  // 如果有最后同步时间记录，不需要再次同步
-  if (lastSyncTimestamp) {
-    console.log('🔍 检查同步需求: 已有同步记录，无需重复同步');
+  // 检查初始化标记
+  const hasInitialized = localStorage.getItem('hybrid_storage_initialized');
+  if (hasInitialized && lastSyncTimestamp) {
+    console.log('🔍 检查同步需求: 已初始化且有同步记录，无需重复同步');
     return false;
   }
   
-  console.log('🔍 检查同步需求: 有本地数据但未同步过，需要同步');
+  console.log('🔍 检查同步需求: 需要执行初始同步');
   return true;
 };
 
+// 同步锁定机制 - 防止短时间内重复同步
+let lastSyncAttempt = 0;
+const SYNC_COOLDOWN = 30 * 1000; // 30秒冷却时间
+
 // 执行初始同步
 const performInitialSync = async (): Promise<void> => {
+  const now = Date.now();
+  
+  // 检查冷却时间
+  if (now - lastSyncAttempt < SYNC_COOLDOWN) {
+    console.log('🚫 同步冷却中，跳过重复同步');
+    return;
+  }
+  
   if (storageStatus.syncing) {
     console.log('⚠️ 正在同步中，跳过重复同步');
     return;
   }
   
   try {
+    lastSyncAttempt = now;
     storageStatus.syncing = true;
     console.log('🔄 开始初始同步...');
     
@@ -213,14 +248,31 @@ const tryAutoReconnectAndSync = (): void => {
       if (reconnected && storageStatus.cloudAvailable) {
         console.log('✅ 云端重连成功，开始自动同步...');
         
-        // 检查是否有本地数据需要同步
+        // 检查是否有数据需要同步
         const localEntries = getLocalDiaries();
         if (localEntries.length > 0) {
+          // 检查是否最近刚同步过
+          const lastSyncTime = localStorage.getItem('last_sync_timestamp');
+          const now = Date.now();
+          if (lastSyncTime && (now - parseInt(lastSyncTime)) < (10 * 60 * 1000)) { // 10分钟内
+            console.log('🚫 最近已同步过，跳过自动同步');
+            return;
+          }
+          
           storageStatus.syncing = true;
           try {
+            // 先检查云端数据，避免重复上传
+            const cloudEntries = await getCloudDiaries();
+            if (cloudEntries.length >= localEntries.length) {
+              console.log('☁️ 云端数据完整，跳过自动同步');
+              storageStatus.lastSync = now;
+              localStorage.setItem('last_sync_timestamp', now.toString());
+              return;
+            }
+            
             const result = await syncLocalToCloud();
-            storageStatus.lastSync = Date.now();
-            localStorage.setItem('last_sync_timestamp', storageStatus.lastSync.toString());
+            storageStatus.lastSync = now;
+            localStorage.setItem('last_sync_timestamp', now.toString());
             console.log(`🚀 自动同步完成: 成功 ${result.success} 条, 失败 ${result.failed} 条`);
           } catch (syncError) {
             console.error('自动同步失败:', syncError);
