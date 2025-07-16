@@ -1,0 +1,16 @@
+{
+  "short_name": "天气日记",
+  "name": "天气日记本 - 记录每一天的天气与心情",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#667eea",
+  "background_color": "#ffffff",
+  "description": "一个美观的天气日记应用，帮您记录每一天的天气状况和心情感受。支持云端同步、隐私保护和自动翻译功能。"
+} 
