@@ -1,4 +1,4 @@
-name: 多平台部署优化
+name: GitHub Pages 部署
 
 on:
   push:
@@ -57,67 +57,6 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./build
 
-  deploy-vercel:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-    - name: 检出代码
-      uses: actions/checkout@v4
-      
-    - name: 下载构建产物
-      uses: actions/download-artifact@v4
-      with:
-        name: build-files
-        path: build/
-        
-    - name: 部署到 Vercel
-      uses: amondnet/vercel-action@v25
-      with:
-        vercel-token: ${{ secrets.VERCEL_TOKEN }}
-        vercel-args: '--prod'
-        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-        working-directory: ./build
-
-  sync-to-gitee:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-    - name: 同步到 Gitee
-      uses: wearerequired/git-mirror-action@v1
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.GITEE_PRIVATE_KEY }}
-      with:
-        source-repo: git@github.com:finn-maker/FinnWeather-diary.git
-        destination-repo: git@gitee.com:finn-maker/FinnWeather-diary.git
-
-  deploy-gitee-pages:
-    needs: [build, sync-to-gitee]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-    - name: 检出代码
-      uses: actions/checkout@v4
-      
-    - name: 下载构建产物
-      uses: actions/download-artifact@v4
-      with:
-        name: build-files
-        path: build/
-        
-    - name: 部署到 Gitee Pages
-      uses: yanglbme/gitee-pages-action@v1
-      with:
-        gitee-username: finn-maker
-        gitee-password: ${{ secrets.GITEE_PASSWORD }}
-        gitee-repo: finn-maker/FinnWeather-diary
-        branch: gh-pages
-
   performance-audit:
     needs: deploy-github-pages
     runs-on: ubuntu-latest
@@ -136,7 +75,7 @@ jobs:
         temporaryPublicStorage: true
 
   create-release:
-    needs: [deploy-github-pages, deploy-vercel]
+    needs: [deploy-github-pages]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     
@@ -169,22 +108,18 @@ jobs:
           
           ### 🔗 部署链接
           - GitHub Pages: https://finn-maker.github.io/FinnWeather-diary/
-          - Vercel: https://finn-weather-diary.vercel.app/
-          - Gitee Pages: https://finn-maker.gitee.io/FinnWeather-diary/
         draft: false
         prerelease: false
 
   notify-deployment:
-    needs: [deploy-github-pages, deploy-vercel, deploy-gitee-pages, performance-audit, create-release]
+    needs: [deploy-github-pages, performance-audit, create-release]
     runs-on: ubuntu-latest
     if: always() && github.ref == 'refs/heads/main'
     
     steps:
     - name: 部署通知
       run: |
-        echo "🎉 天气日记多平台部署完成！"
+        echo "🎉 天气日记部署完成！"
         echo "📱 GitHub Pages: https://finn-maker.github.io/FinnWeather-diary/"
-        echo "⚡ Vercel: https://finn-weather-diary.vercel.app/"
-        echo "🇨🇳 Gitee Pages: https://finn-maker.gitee.io/FinnWeather-diary/"
         echo "📊 性能审计已完成，检查Lighthouse报告"
         echo "🏷️ 发布版本已创建" 

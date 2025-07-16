@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Button, 
-  Chip,
-  useTheme 
+  Chip
 } from '@mui/material';
 import { DarkMode, LightMode } from '@mui/icons-material';
 
 const ThemeToggle: React.FC = () => {
   const [isNightMode, setIsNightMode] = useState(false);
-  const theme = useTheme();
 
   // 只在开发环境显示主题切换按钮
   const isDevelopment = process.env.NODE_ENV === 'development';

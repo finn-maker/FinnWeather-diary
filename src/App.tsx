@@ -11,8 +11,8 @@ import {
   useMediaQuery,
   Skeleton
 } from '@mui/material';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Refresh, Menu } from '@mui/icons-material';
+import { motion } from 'framer-motion';
+import { Refresh } from '@mui/icons-material';
 import WeatherHeader from './components/WeatherHeader';
 import PrivacyStatus from './components/PrivacyStatus';
 import WeatherDataSource from './components/WeatherDataSource';
@@ -32,25 +32,16 @@ const ThemeToggle = lazy(() => import('./components/ThemeToggle'));
 const App: React.FC = () => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [diaryEntries, setDiaryEntries] = useState<DiaryEntry[]>([]);
-  const [loading, setLoading] = useState(false); // 🚀 优化：立即显示UI，不等待数据加载
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [isInitialized, setIsInitialized] = useState(false);
-  const [weatherLoading, setWeatherLoading] = useState(true); // 天气数据加载状态
-  const [diaryLoading, setDiaryLoading] = useState(true); // 日记数据加载状态
   const initializationStarted = useRef(false);
 
-  useEffect(() => {
-    if (!isInitialized && !initializationStarted.current) {
-      initializationStarted.current = true;
-      loadInitialData();
-    }
-  }, [isInitialized]);
-
-  const loadInitialData = async () => {
+  // 🚀 使用useCallback优化，避免依赖数组问题
+  const loadInitialData = useCallback(async () => {
     try {
-      console.log('🚀 开始初始化应用数据...', { isInitialized, started: initializationStarted.current });
+      console.log('🚀 开始初始化应用数据...', { started: initializationStarted.current });
       
       // 🚀 并行初始化：天气数据获取和存储初始化同时进行
       const [weatherData, storageResult] = await Promise.allSettled([
@@ -65,7 +56,7 @@ const App: React.FC = () => {
       } else {
         console.error('⚠️ 天气数据获取失败:', weatherData.reason);
       }
-      setWeatherLoading(false); // 🚀 天气数据加载完成
+      // setWeatherLoading(false); // 🚀 天气数据加载完成 - REMOVED
 
       // 处理存储初始化结果
       if (storageResult.status === 'fulfilled') {
@@ -83,18 +74,25 @@ const App: React.FC = () => {
         console.error('⚠️ 日记数据加载失败:', diaryError);
         setDiaryEntries([]); // 设置空数组作为降级方案
       }
-      setDiaryLoading(false); // 🚀 日记数据加载完成
+      // setDiaryLoading(false); // 🚀 日记数据加载完成 - REMOVED
       
       setIsInitialized(true);
       console.log('✅ 应用数据初始化完成');
     } catch (error) {
       console.error('加载数据失败:', error);
       setIsInitialized(true); // 即使失败也标记为已初始化，避免无限重试
-      setWeatherLoading(false);
-      setDiaryLoading(false);
+      // setWeatherLoading(false); // REMOVED
+      // setDiaryLoading(false); // REMOVED
       initializationStarted.current = false; // 重置，允许用户手动重试
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!isInitialized && !initializationStarted.current) {
+      initializationStarted.current = true;
+      loadInitialData();
+    }
+  }, [isInitialized, loadInitialData]);
 
   const handleRefreshWeather = useCallback(async () => {
     try {
@@ -114,13 +112,13 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // 使用useMemo缓存主题计算结果，避免重复计算
+  // 🚀 修复useMemo依赖数组
   const weatherTheme = useMemo(() => {
-    if (!weather) {
+    if (!weather?.condition) {
       return 'default';
     }
     return weather.condition;
-  }, [weather?.condition]);
+  }, [weather]);
 
   return (
     <Box

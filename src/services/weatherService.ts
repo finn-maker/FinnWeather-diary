@@ -1,4 +1,4 @@
-import { WeatherData, MoonPhase, MOON_PHASE_ICONS } from '../types';
+import { WeatherData, MOON_PHASE_ICONS } from '../types';
 import { calculateMoonPhase } from './moonPhaseService';
 import { API_CONFIG, validateApiConfig, getApiInfo } from '../config/apiConfig';
 
@@ -1094,7 +1094,7 @@ export const getWeatherData = async (): Promise<WeatherData> => {
 const performActualWeatherRequest = async (): Promise<WeatherData> => {
   try {
     // 检查API配置状态
-    const configValidation = checkApiConfiguration();
+    checkApiConfiguration();
     
     // 获取用户位置
     const position = await getCurrentPosition();

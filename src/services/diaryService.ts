@@ -1,4 +1,4 @@
-import { DiaryEntry, WeatherData } from '../types';
+import { DiaryEntry } from '../types';
 
 const STORAGE_KEY = 'weather_diary_entries';
 

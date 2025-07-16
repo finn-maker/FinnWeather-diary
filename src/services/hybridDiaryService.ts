@@ -430,55 +430,6 @@ export const updateHybridDiary = async (id: string, updates: Partial<DiaryEntry>
   return localResult;
 };
 
-// 合并本地和云端数据
-const mergeEntries = (cloudEntries: DiaryEntry[], localEntries: DiaryEntry[]): DiaryEntry[] => {
-  const entryMap = new Map<string, DiaryEntry>();
-  const signatureMap = new Map<string, DiaryEntry>();
-  
-  // 生成内容签名函数
-  const generateSignature = (entry: DiaryEntry): string => {
-    return `${entry.timestamp}_${entry.title}_${entry.content.substring(0, 50)}`;
-  };
-  
-  // 先加入本地数据
-  localEntries.forEach(entry => {
-    const signature = generateSignature(entry);
-    entryMap.set(entry.id, entry);
-    signatureMap.set(signature, entry);
-  });
-  
-  // 云端数据处理：ID优先覆盖，内容签名去重
-  cloudEntries.forEach(entry => {
-    const signature = generateSignature(entry);
-    
-    // 如果内容签名已存在，说明是重复内容
-    if (signatureMap.has(signature)) {
-      const existingEntry = signatureMap.get(signature)!;
-      
-      // 如果云端条目更新，则用云端版本替换
-      if (entry.timestamp >= existingEntry.timestamp) {
-        // 移除旧的本地条目
-        entryMap.delete(existingEntry.id);
-        // 添加云端条目
-        entryMap.set(entry.id, entry);
-        signatureMap.set(signature, entry);
-      }
-      // 否则保留本地版本，不添加云端重复项
-    } else {
-      // 新的云端条目
-      entryMap.set(entry.id, entry);
-      signatureMap.set(signature, entry);
-    }
-  });
-  
-  // 按时间戳排序
-  const result = Array.from(entryMap.values()).sort((a, b) => b.timestamp - a.timestamp);
-  
-  console.log(`🔄 数据合并: 云端 ${cloudEntries.length} 条, 本地 ${localEntries.length} 条, 去重后 ${result.length} 条`);
-  
-  return result;
-};
-
 // 手动同步到云端
 export const manualSyncToCloud = async (): Promise<{ success: number; failed: number }> => {
   if (!storageStatus.cloudAvailable) {
