@@ -140,6 +140,19 @@ const checkApiConfiguration = () => {
     console.warn('💡 建议:', validation.warnings.join(', '));
   }
   
+  // 检查是否需要清除缓存（用于调试）
+  const shouldClearCache = new URLSearchParams(window.location.search).get('clearCache') === 'true';
+  if (shouldClearCache) {
+    console.log('🧹 检测到clearCache参数，清除所有天气缓存');
+    localStorage.removeItem('weather_cache');
+    localStorage.removeItem('weather_last_position');
+    localStorage.removeItem('weather_current_source');
+    // 清除内存缓存
+    weatherCache = { data: null, location: '', timestamp: 0 };
+    lastAmapCall = null;
+    console.log('✅ 缓存已清除');
+  }
+  
   return validation;
 };
 
@@ -413,21 +426,43 @@ const fetchAmapWeatherData = async (lat: number, lon: number): Promise<WeatherDa
     // 智能获取地名信息，特别处理直辖市
     const addressComponent = geoData.regeocode.addressComponent;
     
+    // 添加调试信息
+    console.log('🔍 高德地图地址信息调试:', {
+      province: addressComponent.province,
+      city: addressComponent.city,
+      district: addressComponent.district,
+      township: addressComponent.township
+    });
+    
     // 直辖市判断和处理
     const municipalities = ['北京市', '上海市', '天津市', '重庆市'];
     const province = addressComponent.province || '';
+    const city = addressComponent.city || '';
+    const district = addressComponent.district || '';
     
     let locationName;
+    
+    // 优先检查直辖市
     if (municipalities.includes(province)) {
       // 直辖市：显示省市+区
-      const district = addressComponent.district || '';
       locationName = district ? `${province}${district}` : province;
+      console.log('🏛️ 直辖市处理:', locationName);
+    } else if (municipalities.includes(city)) {
+      // 处理city字段包含直辖市的情况
+      locationName = district ? `${city}${district}` : city;
+      console.log('🏛️ 直辖市处理(city字段):', locationName);
     } else {
-      // 非直辖市：使用原逻辑
-      locationName = formatLocationName(
-        addressComponent.city || addressComponent.district,
-        addressComponent.province
-      );
+      // 非直辖市：优先使用市级名称，避免逗号问题
+      if (city) {
+        locationName = city;
+      } else if (district) {
+        locationName = district;
+      } else if (province) {
+        locationName = province;
+      } else {
+        locationName = '未知位置';
+      }
+      console.log('🌆 非直辖市处理:', locationName);
     }
 
     // 获取天气信息 - 添加extensions参数获取实时天气
