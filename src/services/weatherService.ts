@@ -2,6 +2,103 @@ import { WeatherData, MOON_PHASE_ICONS } from '../types';
 import { calculateMoonPhase } from './moonPhaseService';
 import { API_CONFIG, validateApiConfig, getApiInfo } from '../config/apiConfig';
 
+// 天气状态表情符号映射
+const WEATHER_EMOJI_MAP: { [key: string]: string } = {
+  // 晴天相关
+  '晴': '☀️', '晴天': '☀️', '晴朗': '☀️', '晴间多云': '⛅',
+  'Sunny': '☀️', 'Clear': '☀️',
+  
+  // 云相关
+  '多云': '☁️', '少云': '⛅', '阴': '☁️', '阴天': '☁️', '阴霾': '☁️',
+  '局部多云': '⛅',
+  'Partly cloudy': '⛅', 'Cloudy': '☁️', 'Overcast': '☁️',
+  
+  // 雨相关
+  '雨': '🌧️', '小雨': '🌦️', '中雨': '🌧️', '大雨': '🌧️', '暴雨': '⛈️',
+  '阵雨': '🌦️', '雷雨': '⛈️', '雷阵雨': '⛈️', '毛毛雨': '🌦️',
+  '大暴雨': '⛈️', '特大暴雨': '⛈️', '极大雨': '⛈️', '冻雨': '🧊',
+  'Light rain': '🌦️', 'Moderate rain': '🌧️', 'Heavy rain': '🌧️',
+  'Thunderstorm': '⛈️', 'Drizzle': '🌦️',
+  
+  // 雪相关
+  '雪': '❄️', '小雪': '🌨️', '中雪': '❄️', '大雪': '❄️', '暴雪': '❄️',
+  '阵雪': '🌨️', '冰雹': '🧊',
+  'Light snow': '🌨️', 'Heavy snow': '❄️', 'Sleet': '🌨️',
+  
+  // 雨雪混合
+  '雨夹雪': '🌧️❄️', '雨雪天气': '🌧️❄️', '阵雨夹雪': '🌦️❄️',
+  
+  // 雾霾相关
+  '雾': '🌫️', '薄雾': '🌫️', '浓雾': '🌫️', '霾': '🌫️', '大雾': '🌫️',
+  'Fog': '🌫️', 'Mist': '🌫️',
+  
+  // 风相关
+  '大风': '💨', '强风': '💨', '狂风': '💨', '龙卷风': '🌪️', '台风': '🌪️',
+  '沙尘暴': '🌪️', '扬沙': '🌪️',
+  
+  // 其他
+  '热': '🔥', '冷': '🥶', '未知': '❓'
+};
+
+// 将天气描述转换为表情符号
+const convertWeatherToEmoji = (description: string): string => {
+  if (!description) return '❓';
+  
+  // 移除夜晚前缀进行匹配
+  let cleanDesc = description.replace(/^夜晚\s*-\s*/, '');
+  
+  // 处理复合天气（包含多种天气现象）
+  const weatherWords = cleanDesc.split(/[与和及、，,\s]+/).filter(word => word.length > 0);
+  
+  // 检查是否为复合天气
+  if (weatherWords.length > 1) {
+    const emojis: string[] = [];
+    
+    for (const word of weatherWords) {
+      // 查找匹配的表情符号
+      for (const [key, emoji] of Object.entries(WEATHER_EMOJI_MAP)) {
+        if (word.includes(key) || key.includes(word)) {
+          if (!emojis.includes(emoji)) {
+            emojis.push(emoji);
+          }
+          break;
+        }
+      }
+    }
+    
+    if (emojis.length > 0) {
+      return emojis.join('');
+    }
+  }
+  
+  // 单一天气或直接匹配
+  for (const [key, emoji] of Object.entries(WEATHER_EMOJI_MAP)) {
+    if (cleanDesc.includes(key) || key.includes(cleanDesc)) {
+      return emoji;
+    }
+  }
+  
+  // 特殊处理一些常见的复合天气
+  if (cleanDesc.includes('雨') && cleanDesc.includes('雪')) {
+    return '🌧️❄️';
+  }
+  if (cleanDesc.includes('雷') && cleanDesc.includes('雨')) {
+    return '⛈️';
+  }
+  if (cleanDesc.includes('风') && cleanDesc.includes('雨')) {
+    return '🌧️💨';
+  }
+  if (cleanDesc.includes('风') && cleanDesc.includes('雪')) {
+    return '❄️💨';
+  }
+  
+  // 如果都没匹配到，返回默认表情
+  return '🌤️';
+};
+
+// 导出天气表情符号转换函数
+export { convertWeatherToEmoji };
+
 // 天气API配置（从配置文件导入）
 const WEATHER_APIS = {
   qweather: API_CONFIG.qweather,

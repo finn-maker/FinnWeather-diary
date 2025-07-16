@@ -28,6 +28,7 @@ import {
 import { DiaryEntry } from '../types';
 import { downloadBackup, importDiaryData, formatDate } from '../services/diaryService';
 import { deleteHybridDiary } from '../services/hybridDiaryService';
+import { convertWeatherToEmoji } from '../services/weatherService';
 
 interface DiaryHistoryProps {
   entries: DiaryEntry[];
@@ -308,12 +309,12 @@ const DiaryHistory: React.FC<DiaryHistoryProps> = ({ entries, onUpdate }) => {
                     {/* 第三行：天气描述 */}
                     <Box>
                       <Chip
-                        label={`${entry.weather.icon} ${entry.weather.description}`}
+                        label={`${entry.weather.icon} ${convertWeatherToEmoji(entry.weather.description)}`}
                         size="small"
                         variant="outlined"
                         data-weather-info="description"
                         sx={{
-                          fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                          fontSize: { xs: '1rem', sm: '1.2rem' },
                           fontFamily: '"Noto Sans SC", sans-serif',
                           fontWeight: 500,
                           '& .MuiChip-label': {

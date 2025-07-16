@@ -12,6 +12,7 @@ import {
 import { motion } from 'framer-motion';
 import { Refresh, LocationOn, Thermostat, Opacity, Air } from '@mui/icons-material';
 import { WeatherData, MOON_PHASE_ICONS } from '../types';
+import { convertWeatherToEmoji } from '../services/weatherService';
 
 interface WeatherHeaderProps {
   weather: WeatherData | null;
@@ -86,8 +87,12 @@ const WeatherHeader: React.FC<WeatherHeaderProps> = ({ weather, onRefresh }) => 
                   </Typography>
                 </Box>
                 
-                <Typography variant="body1" sx={{ color: getWeatherTheme() === 'night' ? '#b0b0b0' : 'text.secondary' }} mb={1}>
-                  {weather.description}
+                <Typography variant="body1" sx={{ 
+                  color: getWeatherTheme() === 'night' ? '#b0b0b0' : 'text.secondary',
+                  fontSize: '1.5rem',
+                  fontWeight: 500
+                }} mb={1}>
+                  {convertWeatherToEmoji(weather.description)}
                 </Typography>
 
                 {/* 温度显示 */}
