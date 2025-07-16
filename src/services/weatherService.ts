@@ -265,22 +265,34 @@ const fetchQWeatherData = async (lat: number, lon: number): Promise<WeatherData>
       if (geoData.code === '200' && geoData.location && geoData.location.length > 0) {
         const location = geoData.location[0];
         
-        // 和风天气API地名处理
+        // 和风天气API地名处理：完全避免逗号问题
         if (location.country === '中国' || location.country === 'China') {
-          // 中国地区：优先使用adm1（省级）+ name（市/区级）
+          // 中国地区：特殊处理直辖市，避免逗号
           const adm1 = location.adm1 || '';
           const name = location.name || '';
           
-          // 直辖市判断
-          const municipalities = ['北京市', '上海市', '天津市', '重庆市'];
-          if (municipalities.includes(adm1)) {
-            locationName = name ? `${adm1}${name}` : adm1;
+          // 直辖市列表（扩展版本）
+          const municipalities = ['北京市', '上海市', '天津市', '重庆市', '北京', '上海', '天津', '重庆'];
+          
+          // 检查adm1是否为直辖市
+          const isDirectMunicipality = municipalities.some(city => 
+            adm1.includes(city) || city.includes(adm1)
+          );
+          
+          if (isDirectMunicipality) {
+            // 直辖市：显示省级单位+区级单位
+            if (name && (name.includes('区') || name.includes('县'))) {
+              locationName = `${adm1}${name}`;
+            } else {
+              locationName = adm1;
+            }
           } else {
-            locationName = formatLocationName(name, adm1);
+            // 非直辖市：优先显示name，如果name为空则显示adm1
+            locationName = name || adm1 || '未知位置';
           }
         } else {
-          // 国外地区：使用原逻辑
-          locationName = formatLocationName(location.name, location.adm1, location.country);
+          // 国外地区：优先显示name
+          locationName = location.name || location.adm1 || location.country || '未知位置';
         }
       }
     }
@@ -426,12 +438,14 @@ const fetchAmapWeatherData = async (lat: number, lon: number): Promise<WeatherDa
     // 智能获取地名信息，特别处理直辖市
     const addressComponent = geoData.regeocode.addressComponent;
     
-    // 添加调试信息
+    // 添加详细调试信息
     console.log('🔍 高德地图地址信息调试:', {
       province: addressComponent.province,
       city: addressComponent.city,
       district: addressComponent.district,
-      township: addressComponent.township
+      township: addressComponent.township,
+      街道: addressComponent.street,
+      门牌: addressComponent.number
     });
     
     // 直辖市判断和处理
@@ -464,6 +478,15 @@ const fetchAmapWeatherData = async (lat: number, lon: number): Promise<WeatherDa
       }
       console.log('🌆 非直辖市处理:', locationName);
     }
+    
+    // 最终调试：确认地名没有逗号
+    console.log('✅ 最终地名结果:', {
+      原始province: addressComponent.province,
+      原始city: addressComponent.city,
+      原始district: addressComponent.district,
+      最终地名: locationName,
+      包含逗号: locationName.includes(',')
+    });
 
     // 获取天气信息 - 添加extensions参数获取实时天气
     const weatherUrl = `${WEATHER_APIS.amap.baseUrl}/weather/weatherInfo?city=${cityCode}&key=${WEATHER_APIS.amap.key}&extensions=base&output=json`;
@@ -965,7 +988,7 @@ const cleanTranslationResult = (translated: string): string => {
     .substring(0, 50); // 限制长度
 };
 
-// 🚀 优化：智能格式化地名，特别处理直辖市精确到区
+// 🚀 优化：智能格式化地名，绝对避免逗号问题
 const formatLocationName = (...parts: string[]): string => {
   // 过滤掉空值、undefined、null和只有空格的字符串
   const validParts = parts
@@ -1006,8 +1029,19 @@ const formatLocationName = (...parts: string[]): string => {
     }
   }
   
-  // 非直辖市的常规处理
-  return validParts.join(', ');
+  // 非直辖市的处理：优先返回最详细的地名，避免逗号
+  // 优先级：区级 > 市级 > 省级 > 国家级
+  const preferredOrder = ['区', '县', '市', '州', '省', '自治区'];
+  
+  for (const suffix of preferredOrder) {
+    const found = validParts.find(part => part.includes(suffix));
+    if (found) {
+      return found;
+    }
+  }
+  
+  // 如果都没有匹配，返回第一个有效部分
+  return validParts[0];
 };
 
 // 备用地名处理逻辑
@@ -1125,14 +1159,19 @@ const parseWeatherData = async (data: any): Promise<WeatherData> => {
     // 翻译天气描述
     const translatedWeatherDesc = await translateWeatherDescription(weatherDesc);
 
-    // wttr.in API地名处理：优先使用城市名，避免逗号问题
+    // wttr.in API地名处理：完全避免逗号问题
     let locationName;
     if (translatedCountry === '中国' || countryName === 'China') {
-      // 中国地区：优先显示城市名
+      // 中国地区：直接使用城市名，不含逗号
       locationName = translatedArea || '未知位置';
     } else {
-      // 国外地区：显示城市, 国家
-      locationName = formatLocationName(translatedArea, translatedCountry);
+      // 国外地区：优先显示城市名，必要时添加国家
+      if (translatedArea && translatedCountry && translatedArea !== translatedCountry) {
+        // 只有在城市和国家不同时才组合，避免逗号
+        locationName = `${translatedArea}${translatedCountry}`;
+      } else {
+        locationName = translatedArea || translatedCountry || '未知位置';
+      }
     }
 
     return {
@@ -1152,12 +1191,17 @@ const parseWeatherData = async (data: any): Promise<WeatherData> => {
     const translatedCountry = locationTranslations[countryName] || countryName;
     const translatedWeatherDesc = await translateWeatherDescription(weatherDesc);
 
-    // 备用方案也要处理中国地区
+    // 备用方案也要完全避免逗号问题
     let locationName;
     if (translatedCountry === '中国' || countryName === 'China') {
       locationName = translatedArea || '未知位置';
     } else {
-      locationName = formatLocationName(translatedArea, translatedCountry);
+      // 国外地区备用方案：避免逗号
+      if (translatedArea && translatedCountry && translatedArea !== translatedCountry) {
+        locationName = `${translatedArea}${translatedCountry}`;
+      } else {
+        locationName = translatedArea || translatedCountry || '未知位置';
+      }
     }
 
     return {
