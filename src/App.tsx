@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy, useMemo, useCallback } from 'react';
 import { 
   Container, 
   Box, 
@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Refresh, Menu } from '@mui/icons-material';
 import WeatherHeader from './components/WeatherHeader';
 import PrivacyStatus from './components/PrivacyStatus';
+import WeatherDataSource from './components/WeatherDataSource';
 import { WeatherData, DiaryEntry } from './types';
 import { getWeatherData } from './services/weatherService';
 import { saveHybridDiary, getHybridDiaries, initializeHybridStorage } from './services/hybridDiaryService';
@@ -31,30 +32,67 @@ const ThemeToggle = lazy(() => import('./components/ThemeToggle'));
 const App: React.FC = () => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [diaryEntries, setDiaryEntries] = useState<DiaryEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // 🚀 优化：立即显示UI，不等待数据加载
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [weatherLoading, setWeatherLoading] = useState(true); // 天气数据加载状态
+  const [diaryLoading, setDiaryLoading] = useState(true); // 日记数据加载状态
+  const initializationStarted = useRef(false);
+
   useEffect(() => {
-    loadInitialData();
-  }, []);
+    if (!isInitialized && !initializationStarted.current) {
+      initializationStarted.current = true;
+      loadInitialData();
+    }
+  }, [isInitialized]);
 
   const loadInitialData = async () => {
     try {
-      // 初始化混合存储
-      await initializeHybridStorage();
+      console.log('🚀 开始初始化应用数据...', { isInitialized, started: initializationStarted.current });
       
-      // 加载天气数据
-      const weatherData = await getWeatherData();
-      setWeather(weatherData);
+      // 🚀 并行初始化：天气数据获取和存储初始化同时进行
+      const [weatherData, storageResult] = await Promise.allSettled([
+        getWeatherData(),
+        initializeHybridStorage()
+      ]);
+
+      // 处理天气数据结果
+      if (weatherData.status === 'fulfilled') {
+        setWeather(weatherData.value);
+        console.log('✅ 天气数据获取完成');
+      } else {
+        console.error('⚠️ 天气数据获取失败:', weatherData.reason);
+      }
+      setWeatherLoading(false); // 🚀 天气数据加载完成
+
+      // 处理存储初始化结果
+      if (storageResult.status === 'fulfilled') {
+        console.log('✅ 存储初始化完成');
+      } else {
+        console.error('⚠️ 存储初始化失败:', storageResult.reason);
+      }
       
-      // 加载日记历史
-      const entries = await getHybridDiaries();
-      setDiaryEntries(entries);
+      // 加载日记历史（依赖存储初始化完成）
+      try {
+        const entries = await getHybridDiaries();
+        setDiaryEntries(entries);
+        console.log('✅ 日记数据加载完成');
+      } catch (diaryError) {
+        console.error('⚠️ 日记数据加载失败:', diaryError);
+        setDiaryEntries([]); // 设置空数组作为降级方案
+      }
+      setDiaryLoading(false); // 🚀 日记数据加载完成
+      
+      setIsInitialized(true);
+      console.log('✅ 应用数据初始化完成');
     } catch (error) {
       console.error('加载数据失败:', error);
-    } finally {
-      setLoading(false);
+      setIsInitialized(true); // 即使失败也标记为已初始化，避免无限重试
+      setWeatherLoading(false);
+      setDiaryLoading(false);
+      initializationStarted.current = false; // 重置，允许用户手动重试
     }
   };
 
@@ -234,6 +272,7 @@ const App: React.FC = () => {
       
       {/* 隐私保障状态 */}
       <PrivacyStatus />
+      <WeatherDataSource />
     </Box>
   );
 };

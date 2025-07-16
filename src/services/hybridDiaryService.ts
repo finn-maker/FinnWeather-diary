@@ -55,55 +55,32 @@ export const initializeHybridStorage = async (): Promise<StorageStatus> => {
       return storageStatus;
     }
 
-    // 检查网络连接
-    const cloudConnected = await checkCloudConnection();
-    if (!cloudConnected) {
-      console.log('🔌 云端连接失败，使用本地存储模式');
-      storageStatus.mode = 'local';
-      return storageStatus;
-    }
-
-    // 初始化用户认证
-    try {
-      await initializeAuth();
+    // 🚀 优化：不立即检查网络连接，先尝试快速初始化
+    // 如果有缓存的用户ID，说明之前认证过，直接使用
+    const cachedUserId = localStorage.getItem('weather_diary_user_id');
+    if (cachedUserId) {
+      console.log('⚡ 使用缓存用户ID，快速启动云端模式');
       storageStatus.cloudAvailable = true;
       storageStatus.mode = 'hybrid';
       
-      console.log('☁️ 云端存储已启用，使用混合模式');
+      // 后台异步验证连接和执行同步
+      setTimeout(() => {
+        verifyAndSyncInBackground();
+      }, 1000); // 延迟1秒执行，不阻塞UI
       
-      // 检查是否需要初始同步（仅在首次使用时）
-      if (shouldPerformInitialSync()) {
-        console.log('🔄 检测到需要初始同步，检查云端数据...');
-        
-        // 先检查云端是否已有数据
-        try {
-          const cloudEntries = await getCloudDiaries();
-          if (cloudEntries.length > 0) {
-            console.log(`☁️ 云端已有 ${cloudEntries.length} 条数据，跳过上传同步`);
-            // 标记已完成初始同步，但不执行上传
-            localStorage.setItem('hybrid_storage_initialized', 'true');
-            localStorage.setItem('last_sync_timestamp', Date.now().toString());
-          } else {
-            console.log('📤 云端无数据，开始同步本地数据...');
-            await performInitialSync();
-            // 标记已完成初始同步
-            localStorage.setItem('hybrid_storage_initialized', 'true');
-          }
-        } catch (cloudError) {
-          console.warn('检查云端数据失败，尝试同步:', cloudError);
-          await performInitialSync();
-          localStorage.setItem('hybrid_storage_initialized', 'true');
-        }
-      } else {
-        console.log('✅ 云端存储已初始化，跳过初始同步');
-      }
-      
-      return storageStatus;
-    } catch (authError) {
-      console.error('认证失败，降级到本地模式:', authError);
-      storageStatus.mode = 'local';
       return storageStatus;
     }
+
+    // 🚀 优化：如果没有缓存用户ID，也不立即网络检查，先启动本地模式
+    console.log('🏃‍♂️ 快速启动本地模式，后台尝试云端连接');
+    storageStatus.mode = 'local';
+    
+    // 后台异步尝试云端连接
+    setTimeout(() => {
+      tryCloudConnectionInBackground();
+    }, 2000); // 延迟2秒执行
+    
+    return storageStatus;
   } catch (error) {
     console.error('初始化存储失败:', error);
     storageStatus.mode = 'local';
@@ -111,9 +88,76 @@ export const initializeHybridStorage = async (): Promise<StorageStatus> => {
   }
 };
 
-// 检查是否需要执行初始同步
-const shouldPerformInitialSync = (): boolean => {
-  // 首先检查是否有同步时间戳记录 - 最可靠的标记
+// 后台验证连接和同步（不阻塞UI）
+const verifyAndSyncInBackground = async (): Promise<void> => {
+  try {
+    console.log('🔍 后台验证云端连接...');
+    
+    // 快速检查认证状态
+    const connected = await checkCloudConnection();
+    if (!connected) {
+      console.log('🔌 云端连接失败，降级到本地模式');
+      storageStatus.mode = 'local';
+      storageStatus.cloudAvailable = false;
+      return;
+    }
+
+    console.log('✅ 云端连接验证成功');
+    
+    // 检查是否需要同步（优化：减少网络请求）
+    if (shouldPerformInitialSyncFast()) {
+      console.log('🔄 检测到需要后台同步...');
+      
+      // 异步执行同步，不阻塞UI
+      performBackgroundSync();
+    } else {
+      console.log('✅ 无需同步，云端存储就绪');
+    }
+    
+  } catch (error) {
+    console.error('后台验证失败:', error);
+    storageStatus.mode = 'local';
+    storageStatus.cloudAvailable = false;
+  }
+};
+
+// 后台尝试云端连接（不阻塞UI）
+const tryCloudConnectionInBackground = async (): Promise<void> => {
+  try {
+    console.log('🔄 后台尝试云端连接...');
+    
+    const connected = await checkCloudConnection();
+    if (connected) {
+      await initializeAuth();
+      storageStatus.cloudAvailable = true;
+      storageStatus.mode = 'hybrid';
+      
+      console.log('✅ 后台云端连接成功，已升级到混合模式');
+      
+      // 触发UI更新事件
+      window.dispatchEvent(new CustomEvent('storageStatusChanged', { 
+        detail: { status: storageStatus } 
+      }));
+      
+      // 检查是否需要同步
+      if (shouldPerformInitialSyncFast()) {
+        performBackgroundSync();
+      }
+    } else {
+      console.log('❌ 后台云端连接失败，继续使用本地模式');
+    }
+  } catch (error) {
+    console.error('后台云端连接失败:', error);
+  }
+};
+
+// 同步锁定机制 - 防止短时间内重复同步
+let lastSyncAttempt = 0;
+const SYNC_COOLDOWN = 30 * 1000; // 30秒冷却时间
+
+// 快速检查是否需要初始同步（优化版本，减少网络请求）
+const shouldPerformInitialSyncFast = (): boolean => {
+  // 检查是否有同步时间戳记录
   const lastSyncTimestamp = localStorage.getItem('last_sync_timestamp');
   if (lastSyncTimestamp) {
     const lastSyncTime = parseInt(lastSyncTimestamp);
@@ -121,62 +165,80 @@ const shouldPerformInitialSync = (): boolean => {
     
     // 如果最近24小时内同步过，不需要再次同步
     if (lastSyncTime > oneDayAgo) {
-      console.log('🔍 检查同步需求: 最近已同步过，无需重复同步');
+      console.log('🔍 快速检查: 最近已同步过，无需重复同步');
       return false;
     }
   }
   
-  // 检查是否有本地数据需要上传
+  // 快速检查本地数据数量
   const localEntries = getLocalDiaries();
   if (localEntries.length === 0) {
-    console.log('🔍 检查同步需求: 本地无数据，无需同步');
+    console.log('🔍 快速检查: 本地无数据，无需同步');
     return false;
   }
   
-  // 检查初始化标记
+  // 检查是否已完成过初始化
   const hasInitialized = localStorage.getItem('hybrid_storage_initialized');
   if (hasInitialized && lastSyncTimestamp) {
-    console.log('🔍 检查同步需求: 已初始化且有同步记录，无需重复同步');
+    console.log('🔍 快速检查: 已初始化且有同步记录，无需重复同步');
     return false;
   }
   
-  console.log('🔍 检查同步需求: 需要执行初始同步');
+  console.log('🔍 快速检查: 需要执行后台同步');
   return true;
 };
 
-// 同步锁定机制 - 防止短时间内重复同步
-let lastSyncAttempt = 0;
-const SYNC_COOLDOWN = 30 * 1000; // 30秒冷却时间
-
-// 执行初始同步
-const performInitialSync = async (): Promise<void> => {
+// 后台执行同步（不阻塞UI）
+const performBackgroundSync = async (): Promise<void> => {
   const now = Date.now();
   
   // 检查冷却时间
   if (now - lastSyncAttempt < SYNC_COOLDOWN) {
-    console.log('🚫 同步冷却中，跳过重复同步');
+    console.log('🚫 同步冷却中，跳过后台同步');
     return;
   }
   
   if (storageStatus.syncing) {
-    console.log('⚠️ 正在同步中，跳过重复同步');
+    console.log('⚠️ 正在同步中，跳过后台同步');
     return;
   }
   
   try {
     lastSyncAttempt = now;
     storageStatus.syncing = true;
-    console.log('🔄 开始初始同步...');
+    console.log('🔄 开始后台同步...');
+    
+    // 先快速检查云端是否已有数据，避免不必要的上传
+    try {
+      const cloudEntries = await getCloudDiaries();
+      const localEntries = getLocalDiaries();
+      
+      if (cloudEntries.length >= localEntries.length) {
+        console.log(`☁️ 云端已有 ${cloudEntries.length} 条数据，跳过后台同步`);
+        localStorage.setItem('hybrid_storage_initialized', 'true');
+        localStorage.setItem('last_sync_timestamp', Date.now().toString());
+        return;
+      }
+    } catch (checkError) {
+      console.warn('检查云端数据失败，继续同步:', checkError);
+    }
     
     const syncResult = await syncLocalToCloud();
     const currentTime = Date.now();
     
     storageStatus.lastSync = currentTime;
     localStorage.setItem('last_sync_timestamp', currentTime.toString());
+    localStorage.setItem('hybrid_storage_initialized', 'true');
     
-    console.log(`✅ 同步完成: 成功 ${syncResult.success} 条, 失败 ${syncResult.failed} 条`);
+    console.log(`✅ 后台同步完成: 成功 ${syncResult.success} 条, 失败 ${syncResult.failed} 条`);
+    
+    // 触发UI更新事件
+    window.dispatchEvent(new CustomEvent('backgroundSyncCompleted', { 
+      detail: { result: syncResult } 
+    }));
+    
   } catch (error) {
-    console.error('初始同步失败:', error);
+    console.error('后台同步失败:', error);
   } finally {
     storageStatus.syncing = false;
   }

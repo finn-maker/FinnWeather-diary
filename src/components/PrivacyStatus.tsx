@@ -32,7 +32,7 @@ const PrivacyStatus: React.FC<PrivacyStatusProps> = ({ className = '' }) => {
 
   const buttonStyle: React.CSSProperties = {
     position: 'fixed',
-    top: '20px',
+    bottom: '20px', // 移到右下角
     right: '20px',
     zIndex: 999999,
     pointerEvents: 'auto'

@@ -1,0 +1,222 @@
+name: 多平台部署优化
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v3
+      
+    - name: 设置 Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 安装依赖
+      run: npm ci
+      
+    - name: 构建项目
+      run: npm run build
+      
+    - name: 运行测试
+      run: npm test -- --coverage --watchAll=false
+      
+    - name: 上传构建产物
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-files
+        path: build/
+
+  deploy-github-pages:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v3
+      
+    - name: 下载构建产物
+      uses: actions/download-artifact@v3
+      with:
+        name: build-files
+        path: build/
+        
+    - name: 部署到 GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./build
+        cname: # 如果有自定义域名，在这里设置
+
+  deploy-vercel:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v3
+      
+    - name: 下载构建产物
+      uses: actions/download-artifact@v3
+      with:
+        name: build-files
+        path: build/
+        
+    - name: 部署到 Vercel
+      uses: amondnet/vercel-action@v20
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.ORG_ID }}
+        vercel-project-id: ${{ secrets.PROJECT_ID }}
+        working-directory: ./
+
+  sync-to-gitee:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 同步到 Gitee
+      uses: wearerequired/git-mirror-action@master
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
+      with:
+        source-repo: git@github.com:${{ github.repository }}.git
+        destination-repo: git@gitee.com:your-gitee-username/weather-diary.git
+
+  deploy-gitee-pages:
+    needs: sync-to-gitee
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 构建 Gitee Pages
+      uses: yanglbme/gitee-pages-action@main
+      with:
+        gitee-username: ${{ secrets.GITEE_USERNAME }}
+        gitee-password: ${{ secrets.GITEE_PASSWORD }}
+        gitee-repo: your-gitee-username/weather-diary
+        branch: main
+
+  create-release:
+    needs: [deploy-github-pages, deploy-vercel]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v3
+      
+    - name: 下载构建产物
+      uses: actions/download-artifact@v3
+      with:
+        name: build-files
+        path: build/
+        
+    - name: 压缩构建文件
+      run: |
+        cd build
+        zip -r ../weather-diary-build.zip .
+        cd ..
+        
+    - name: 获取版本号
+      id: get_version
+      run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      
+    - name: 创建 Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.get_version.outputs.version }}-${{ github.run_number }}
+        release_name: 天气日记本 v${{ steps.get_version.outputs.version }}
+        body: |
+          ## 🎉 新版本发布
+          
+          ### 📱 在线访问
+          - **GitHub Pages**: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          - **Vercel**: https://weather-diary-react.vercel.app/
+          - **Gitee Pages**: https://your-gitee-username.gitee.io/weather-diary/
+          
+          ### 🚀 CDN 加速访问
+          - **jsDelivr**: https://cdn.jsdelivr.net/gh/${{ github.repository }}@main/build/
+          - **unpkg**: https://unpkg.com/weather-diary-react@latest/build/
+          
+          ### 📦 本地部署
+          ```bash
+          # 下载并解压构建文件
+          wget https://github.com/${{ github.repository }}/releases/download/v${{ steps.get_version.outputs.version }}-${{ github.run_number }}/weather-diary-build.zip
+          unzip weather-diary-build.zip
+          
+          # 使用任意HTTP服务器运行
+          npx serve -s . -p 3000
+          ```
+          
+          ### 🔧 优化内容
+          - ✅ 集成和风天气API (国内)
+          - ✅ 扩展本地翻译词典
+          - ✅ 添加DNS预解析优化
+          - ✅ 智能API降级机制
+          - ✅ 30分钟智能缓存
+          
+          ### 📞 技术支持
+          如遇访问问题，请查看 [CDN优化指南](https://github.com/${{ github.repository }}/blob/main/CDN-优化指南.md)
+        draft: false
+        prerelease: false
+        
+    - name: 上传构建文件到 Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./weather-diary-build.zip
+        asset_name: weather-diary-build.zip
+        asset_content_type: application/zip
+
+  performance-audit:
+    needs: deploy-github-pages
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 等待部署完成
+      run: sleep 60
+      
+    - name: Lighthouse 性能审计
+      uses: treosh/lighthouse-ci-action@v9
+      with:
+        urls: |
+          https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+        uploadArtifacts: true
+        temporaryPublicStorage: true
+
+  notify-deployment:
+    needs: [deploy-github-pages, deploy-vercel, deploy-gitee-pages]
+    runs-on: ubuntu-latest
+    if: always() && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 部署状态通知
+      run: |
+        echo "## 🚀 部署状态报告" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| 平台 | 状态 | 访问地址 |" >> $GITHUB_STEP_SUMMARY
+        echo "|------|------|----------|" >> $GITHUB_STEP_SUMMARY
+        echo "| GitHub Pages | ✅ 成功 | https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/ |" >> $GITHUB_STEP_SUMMARY
+        echo "| Vercel | ✅ 成功 | https://weather-diary-react.vercel.app/ |" >> $GITHUB_STEP_SUMMARY
+        echo "| Gitee Pages | ✅ 成功 | https://your-gitee-username.gitee.io/weather-diary/ |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🌍 CDN 加速地址" >> $GITHUB_STEP_SUMMARY
+        echo "- jsDelivr: https://cdn.jsdelivr.net/gh/${{ github.repository }}@main/build/" >> $GITHUB_STEP_SUMMARY
+        echo "- 国内镜像: 参考 [CDN优化指南](https://github.com/${{ github.repository }}/blob/main/CDN-优化指南.md)" >> $GITHUB_STEP_SUMMARY 

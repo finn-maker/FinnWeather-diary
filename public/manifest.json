@@ -12,5 +12,8 @@
   "display": "standalone",
   "theme_color": "#667eea",
   "background_color": "#ffffff",
-  "description": "一个美观的天气日记应用，帮您记录每一天的天气状况和心情感受。支持云端同步、隐私保护和自动翻译功能。"
+  "description": "一个美观的天气日记应用，帮您记录每一天的天气状况和心情感受。支持云端同步、隐私保护和自动翻译功能。",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "zh-CN"
 } 
