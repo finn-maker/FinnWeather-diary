@@ -326,22 +326,24 @@ export const getHybridDiaries = async (): Promise<DiaryEntry[]> => {
   return localEntries;
 };
 
-// 删除日记 (混合模式)
+// 删除日记 (混合模式) - 优化版本
 export const deleteHybridDiary = async (id: string): Promise<void> => {
-  // 清除缓存
+  // 清除缓存（立即执行，提供即时反馈）
   clearCache();
   
-  // 先从本地删除
+  // 立即从本地删除（乐观更新）
   deleteLocalDiary(id);
+  console.log('✅ 日记已从本地删除');
   
-  // 如果云端可用，尝试从云端删除
+  // 异步从云端删除，不阻塞UI
   if (storageStatus.cloudAvailable && storageStatus.mode === 'hybrid') {
-    try {
-      await deleteCloudDiary(id);
-      console.log('✅ 日记已从本地和云端删除');
-    } catch (error) {
-      console.warn('⚠️ 云端删除失败:', error);
-    }
+    // 在后台异步删除云端数据
+    deleteCloudDiary(id).then(() => {
+      console.log('✅ 日记已从云端删除');
+    }).catch((error) => {
+      console.warn('⚠️ 云端删除失败，但本地已删除:', error);
+      // 可以考虑添加重试逻辑或通知用户
+    });
   }
 };
 

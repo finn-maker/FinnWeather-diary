@@ -324,7 +324,7 @@ const parseWeatherData = async (data: any): Promise<WeatherData> => {
       icon: weatherInfo.icon,
       humidity: current.humidity,
       windSpeed: current.windspeedKmph,
-      moonPhase: isNight ? moonPhase : undefined
+      moonPhase: moonPhase  // 始终提供月相信息，不再设为 undefined
     };
   } catch (error) {
     console.warn('地名翻译失败，使用备用方案:', error);
@@ -341,7 +341,7 @@ const parseWeatherData = async (data: any): Promise<WeatherData> => {
       icon: weatherInfo.icon,
       humidity: current.humidity,
       windSpeed: current.windspeedKmph,
-      moonPhase: isNight ? moonPhase : undefined
+      moonPhase: moonPhase  // 始终提供月相信息，不再设为 undefined
     };
   }
 };
@@ -359,7 +359,7 @@ const getMockWeatherData = (): WeatherData => {
       temperature: '22', 
       condition: isNight ? 'night' as const : 'sunny' as const, 
       icon: isNight ? MOON_PHASE_ICONS[moonPhase] : '☀️',
-      moonPhase: isNight ? moonPhase : undefined
+      moonPhase: moonPhase  // 始终提供月相信息
     },
     { 
       location: '上海市', 
@@ -367,7 +367,7 @@ const getMockWeatherData = (): WeatherData => {
       temperature: '18', 
       condition: isNight ? 'night' as const : 'cloudy' as const, 
       icon: '☁️',
-      moonPhase: isNight ? moonPhase : undefined
+      moonPhase: moonPhase  // 始终提供月相信息
     },
     { 
       location: '广州市', 
@@ -375,7 +375,7 @@ const getMockWeatherData = (): WeatherData => {
       temperature: '25', 
       condition: isNight ? 'night' as const : 'rainy' as const, 
       icon: '🌧️',
-      moonPhase: isNight ? moonPhase : undefined
+      moonPhase: moonPhase  // 始终提供月相信息
     },
     { 
       location: '成都市', 
@@ -383,7 +383,7 @@ const getMockWeatherData = (): WeatherData => {
       temperature: '16', 
       condition: isNight ? 'night' as const : 'cloudy' as const, 
       icon: '⛅',
-      moonPhase: isNight ? moonPhase : undefined
+      moonPhase: moonPhase  // 始终提供月相信息
     }
   ];
 

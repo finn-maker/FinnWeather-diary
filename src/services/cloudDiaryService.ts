@@ -70,17 +70,25 @@ const getUserId = (): string => {
   throw new Error('用户未登录');
 };
 
-// 保存日记到云端
+// 保存日记到云端 (加密版本)
 export const saveCloudDiary = async (entry: Omit<DiaryEntry, 'id' | 'timestamp'>): Promise<DiaryEntry> => {
   try {
     if (!isFirebaseConfigured()) {
-      throw new Error('Firebase未配置，使用本地存储');
+      throw new Error('Firebase未配置');
     }
 
     const userId = getUserId();
     
+    // 清理数据，移除 undefined 值
+    const cleanEntry = JSON.parse(JSON.stringify(entry));
+    
+    // 特别处理 weather.moonPhase，如果是 undefined 则设为 null
+    if (cleanEntry.weather && cleanEntry.weather.moonPhase === undefined) {
+      cleanEntry.weather.moonPhase = null;
+    }
+    
     // 🔒 加密日记内容
-    const encryptedEntry = await encryptDiaryEntry(entry, userId);
+    const encryptedEntry = await encryptDiaryEntry(cleanEntry, userId);
     
     const diaryData = {
       ...encryptedEntry,
