@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   Box,
   Card,
@@ -170,4 +170,4 @@ const WeatherHeader: React.FC<WeatherHeaderProps> = ({ weather, onRefresh }) => 
   );
 };
 
-export default WeatherHeader; 
+export default memo(WeatherHeader); 

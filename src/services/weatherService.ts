@@ -163,22 +163,18 @@ const TRANSLATION_SERVICES = [
 const translateLocationName = async (locationName: string): Promise<string> => {
   // 先检查本地缓存
   if (locationTranslations[locationName]) {
-    console.log(`📍 使用本地翻译: ${locationName} -> ${locationTranslations[locationName]}`);
     return locationTranslations[locationName];
   }
   
   // 检查运行时缓存
   const cached = translationCache[locationName];
   if (cached && (Date.now() - cached.timestamp) < TRANSLATION_CACHE_DURATION) {
-    console.log(`🔄 使用缓存翻译: ${locationName} -> ${cached.result}`);
     return cached.result;
   }
   
   // 尝试使用多个翻译服务
   for (const service of TRANSLATION_SERVICES) {
     try {
-      console.log(`🌐 尝试使用 ${service.name} 翻译: ${locationName}`);
-      
       const requestOptions: RequestInit = {
         method: service.method || 'GET',
         ...(service.headers && { headers: service.headers }),
@@ -194,7 +190,6 @@ const translateLocationName = async (locationName: string): Promise<string> => {
         if (translated && translated !== locationName) {
           // 清理翻译结果
           const cleanTranslated = cleanTranslationResult(translated);
-          console.log(`✅ ${service.name} 翻译成功: ${locationName} -> ${cleanTranslated}`);
           
           // 缓存翻译结果
           translationCache[locationName] = { result: cleanTranslated, timestamp: Date.now() };
@@ -202,12 +197,11 @@ const translateLocationName = async (locationName: string): Promise<string> => {
         }
       }
     } catch (error) {
-      console.warn(`❌ ${service.name} 翻译失败:`, error);
+      // 静默处理翻译失败，继续尝试下一个服务
       continue;
     }
   }
   
-  console.log(`⚠️ 所有翻译服务失败，使用备用处理: ${locationName}`);
   // 如果所有翻译服务都失败，使用备用处理
   return processLocationNameFallback(locationName);
 };
@@ -407,7 +401,7 @@ let weatherCache: {
   location: ''
 };
 
-const CACHE_DURATION = 10 * 60 * 1000; // 10分钟缓存
+const CACHE_DURATION = 30 * 60 * 1000; // 30分钟缓存，减少API调用频率
 
 // 主函数：获取天气数据
 export const getWeatherData = async (): Promise<WeatherData> => {
@@ -424,11 +418,8 @@ export const getWeatherData = async (): Promise<WeatherData> => {
       weatherCache.location === locationKey &&
       (now - weatherCache.timestamp) < CACHE_DURATION
     ) {
-      console.log('🚀 使用缓存的天气数据');
       return weatherCache.data;
     }
-
-    console.log('🌐 从API获取新的天气数据');
     // 获取天气数据
     const weatherData = await fetchWeatherData(latitude, longitude);
     
@@ -445,7 +436,6 @@ export const getWeatherData = async (): Promise<WeatherData> => {
     console.error('获取天气失败:', error);
     // 如果有缓存数据，即使过期也使用
     if (weatherCache.data) {
-      console.log('🔄 使用过期的缓存数据');
       return weatherCache.data;
     }
     // 使用模拟数据作为fallback

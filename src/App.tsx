@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useMemo, useCallback } from 'react';
 import { 
   Container, 
   Box, 
@@ -58,50 +58,48 @@ const App: React.FC = () => {
     }
   };
 
-  const handleRefreshWeather = async () => {
+  const handleRefreshWeather = useCallback(async () => {
     try {
       const weatherData = await getWeatherData();
       setWeather(weatherData);
     } catch (error) {
       console.error('刷新天气失败:', error);
     }
-  };
+  }, []);
 
-  const handleSaveDiary = async (entry: Omit<DiaryEntry, 'id' | 'timestamp'>) => {
+  const handleSaveDiary = useCallback(async (entry: Omit<DiaryEntry, 'id' | 'timestamp'>) => {
     try {
       const newEntry = await saveHybridDiary(entry);
       setDiaryEntries(prev => [newEntry, ...prev]);
     } catch (error) {
       console.error('保存日记失败:', error);
     }
-  };
+  }, []);
 
-  const getWeatherTheme = () => {
+  // 使用useMemo缓存主题计算结果，避免重复计算
+  const weatherTheme = useMemo(() => {
     if (!weather) {
-      console.log('🎨 主题检测: 天气数据为空，使用默认主题');
       return 'default';
     }
-    console.log('🎨 天气条件:', weather.condition);
-    console.log('🎨 当前主题:', weather.condition);
     return weather.condition;
-  };
+  }, [weather?.condition]);
 
   return (
     <Box
-      className={getWeatherTheme() === 'night' ? 'night-theme' : ''}
+      className={weatherTheme === 'night' ? 'night-theme' : ''}
       sx={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${getWeatherGradient(getWeatherTheme())})`,
+        background: `linear-gradient(135deg, ${getWeatherGradient(weatherTheme)})`,
         transition: 'background 1s ease',
       }}
     >
       <AppBar 
         position="static" 
         sx={{ 
-          background: getWeatherTheme() === 'night' ? 'rgba(52, 73, 94, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+          background: weatherTheme === 'night' ? 'rgba(52, 73, 94, 0.95)' : 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(10px)',
           boxShadow: 'none',
-          borderBottom: getWeatherTheme() === 'night' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)'
+          borderBottom: weatherTheme === 'night' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)'
         }}
       >
         <Toolbar>
@@ -113,7 +111,7 @@ const App: React.FC = () => {
               flexGrow: 1,
               fontFamily: '"Ma Shan Zheng", cursive',
               fontSize: '1.5rem',
-              color: getWeatherTheme() === 'night' ? '#64b5f6' : 'inherit'
+              color: weatherTheme === 'night' ? '#64b5f6' : 'inherit'
             }}
           >
             天气日记本
@@ -122,7 +120,7 @@ const App: React.FC = () => {
           <IconButton 
             onClick={handleRefreshWeather}
             sx={{ 
-              color: getWeatherTheme() === 'night' ? '#64b5f6' : 'primary.main'
+              color: weatherTheme === 'night' ? '#64b5f6' : 'primary.main'
             }}
           >
             <Refresh />
@@ -150,7 +148,7 @@ const App: React.FC = () => {
               elevation={3}
               sx={{ 
                 p: 3, 
-                background: getWeatherTheme() === 'night' ? 'rgba(52, 73, 94, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                background: weatherTheme === 'night' ? 'rgba(52, 73, 94, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(10px)',
                 borderRadius: 3
               }}
@@ -183,7 +181,7 @@ const App: React.FC = () => {
               elevation={3}
               sx={{ 
                 p: 3, 
-                background: getWeatherTheme() === 'night' ? 'rgba(52, 73, 94, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                background: weatherTheme === 'night' ? 'rgba(52, 73, 94, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(10px)',
                 borderRadius: 3
               }}
@@ -225,7 +223,7 @@ const App: React.FC = () => {
       </Container>
       
       {/* 夜晚主题的月亮装饰 */}
-      {getWeatherTheme() === 'night' && (
+      {weatherTheme === 'night' && (
         <div className="moon-container" />
       )}
       
