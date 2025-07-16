@@ -1,23 +1,23 @@
 {
   "files": {
     "main.css": "/FinnWeather-diary/static/css/main.fcc12a96.css",
-    "main.js": "/FinnWeather-diary/static/js/main.c2376e36.js",
+    "main.js": "/FinnWeather-diary/static/js/main.e4cec7e7.js",
     "static/js/914.7693795b.chunk.js": "/FinnWeather-diary/static/js/914.7693795b.chunk.js",
-    "static/js/61.204f78a4.chunk.js": "/FinnWeather-diary/static/js/61.204f78a4.chunk.js",
+    "static/js/61.1552f4ef.chunk.js": "/FinnWeather-diary/static/js/61.1552f4ef.chunk.js",
     "static/js/326.ed4d2b5c.chunk.js": "/FinnWeather-diary/static/js/326.ed4d2b5c.chunk.js",
     "static/js/379.c075db29.chunk.js": "/FinnWeather-diary/static/js/379.c075db29.chunk.js",
     "static/js/658.69eef3bf.chunk.js": "/FinnWeather-diary/static/js/658.69eef3bf.chunk.js",
     "index.html": "/FinnWeather-diary/index.html",
     "main.fcc12a96.css.map": "/FinnWeather-diary/static/css/main.fcc12a96.css.map",
-    "main.c2376e36.js.map": "/FinnWeather-diary/static/js/main.c2376e36.js.map",
+    "main.e4cec7e7.js.map": "/FinnWeather-diary/static/js/main.e4cec7e7.js.map",
     "914.7693795b.chunk.js.map": "/FinnWeather-diary/static/js/914.7693795b.chunk.js.map",
-    "61.204f78a4.chunk.js.map": "/FinnWeather-diary/static/js/61.204f78a4.chunk.js.map",
+    "61.1552f4ef.chunk.js.map": "/FinnWeather-diary/static/js/61.1552f4ef.chunk.js.map",
     "326.ed4d2b5c.chunk.js.map": "/FinnWeather-diary/static/js/326.ed4d2b5c.chunk.js.map",
     "379.c075db29.chunk.js.map": "/FinnWeather-diary/static/js/379.c075db29.chunk.js.map",
     "658.69eef3bf.chunk.js.map": "/FinnWeather-diary/static/js/658.69eef3bf.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.fcc12a96.css",
-    "static/js/main.c2376e36.js"
+    "static/js/main.e4cec7e7.js"
   ]
 }
