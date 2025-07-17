@@ -1007,7 +1007,7 @@ const formatLocationName = (...parts: string[]): string => {
   }
   
   // 非直辖市的常规处理
-  return validParts.join(', ');
+  return validParts.join('，');
 };
 
 // 备用地名处理逻辑
