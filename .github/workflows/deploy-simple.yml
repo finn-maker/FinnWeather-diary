@@ -39,6 +39,11 @@ jobs:
     - name: 设置 Pages
       uses: actions/configure-pages@v4
       
+    - name: 上传构建产物
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: build/
+      
     - name: 部署到 GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
